@@ -1,0 +1,12 @@
+- name: video packages
+  pacman: name={{ item }} state=present
+  with_items:
+    - xf86-video-ati
+    - libva-vdpau-driver
+    - mesa-vdpau
+    - xorg-server
+    - xorg-xinit
+    - xorg-xrdb
+    - mplayer
+    - smplayer
+  sudo: yes

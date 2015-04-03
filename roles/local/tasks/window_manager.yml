@@ -1,0 +1,13 @@
+- name: window manager packages
+  pacman: name={{ item }} state=present
+  with_items:
+    - gtk2
+    - gtk-engines
+    - gtk-engine-aurora
+    - lxappearance
+    - openbox
+    - obconf
+    - freetype2
+    - ttf-ubuntu-font-family
+    - ttf-dejavu
+  sudo: yes

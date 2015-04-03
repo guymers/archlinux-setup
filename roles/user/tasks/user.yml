@@ -1,0 +1,2 @@
+- name: add user
+  user: name=user password={{ password }} shell=/bin/bash groups=wheel,uucp,log,video,audio,optical,storage,power append=yes

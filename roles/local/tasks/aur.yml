@@ -1,0 +1,17 @@
+- name: "{{ name }} dependencies"
+  pacman: name={{ item }} state=present
+  with_items: "{{ dependencies }}"
+  sudo: yes
+
+- name: "{{ name }} download"
+  get_url: url=https://aur.archlinux.org/packages/{{ name|list|batch(2)|first|join }}/{{ name }}/{{ name }}.tar.gz dest=/tmp
+
+- name: "{{ name }} untar"
+  shell: chdir=/tmp creates={{ name }} tar xzf {{ name }}.tar.gz
+
+- name: "{{ name }} build"
+  shell: chdir=/tmp/{{ name }} creates={{ name }}.pkg.tar.gz makepkg -f --skippgpcheck && cp *.pkg.tar.xz {{ name }}.pkg.tar.gz
+
+- name: "{{ name }} install"
+  shell: chdir=/tmp/{{ name }} pacman --noconfirm -U {{ name }}.pkg.tar.gz
+  sudo: yes

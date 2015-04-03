@@ -1,0 +1,10 @@
+- include: ntp.yml
+- include: makepkg.yml
+- { include: aur.yml, name: cower, dependencies: [ curl, openssl, yajl ] }
+- { include: aur.yml, name: pacaur, dependencies: [ expac, sudo ] }
+- include: audio.yml
+- include: video.yml
+- include: window_manager.yml
+- include: file_manager.yml
+- include: terminal.yml
+- include: util.yml

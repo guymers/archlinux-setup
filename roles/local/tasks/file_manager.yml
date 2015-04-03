@@ -1,0 +1,7 @@
+- name: file manager packages
+  pacman: name={{ item }} state=present
+  with_items:
+    - thunar
+    - thunar-volman
+    - gvfs
+  sudo: yes

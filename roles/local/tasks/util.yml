@@ -5,4 +5,5 @@
     - rsync
     - net-tools
     - cifs-utils
+    - unzip
   sudo: yes

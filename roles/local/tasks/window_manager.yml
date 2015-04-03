@@ -4,6 +4,7 @@
     - gtk2
     - gtk-engines
     - gtk-engine-aurora
+    - gtk-engine-murrine
     - lxappearance
     - openbox
     - obconf

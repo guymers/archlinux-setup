@@ -1,6 +1,8 @@
 - name: video packages
   pacman: name={{ item }} state=present
   with_items:
+    - xterm
+    - xf86-video-vesa
     - xf86-video-ati
     - libva-vdpau-driver
     - mesa-vdpau

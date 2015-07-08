@@ -8,6 +8,8 @@ hostname="arch"
 lang="en_AU.UTF-8"
 timezone="Australia/Queensland"
 
+dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+
 sgdisk --clear -g $drive
 sgdisk -n 1:0:+512M -c 1:boot -t 1:ef00 $drive
 sgdisk -n 2:0:0 -c 2:root -t 2:8300 $drive
@@ -75,7 +77,21 @@ else
   sed -i "s,APPEND root=[a-z\/0-9]*,APPEND root=$root rootflags=subvol=__active/rootvol," /mnt/boot/syslinux/syslinux.cfg
 fi
 
+mkdir /mnt/archlinux-setup
+mount --bind "${dir}" /mnt/archlinux-setup
+arch-chroot /mnt ansible-playbook --inventory-file=/archlinux-setup/inventory --limit=local /archlinux-setup/user.yml
+umount /mnt/archlinux-setup
+rm -r /mnt/archlinux-setup
+
+pacman -Sy --noconfirm rsync
+mkdir /mnt/home/user/.archlinux-setup
+# copy setup folder excluding hidden files
+rsync -av "${dir}/" --exclude=".*" /mnt/home/user/.archlinux-setup/
+arch-chroot /mnt chown -R user:user /home/user/.archlinux-setup
+
 arch-chroot /mnt systemctl enable dhcpcd
 arch-chroot /mnt bash -c "echo yes" | pacman -Scc
 
-echo "Setup complete, reboot"
+echo ""
+echo ""
+echo "Setup complete, reboot, log in as user (password is user), and run ./.archlinux-setup/run.sh"

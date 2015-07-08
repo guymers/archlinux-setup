@@ -1,3 +1,5 @@
 #!/bin/sh
-ansible-playbook --inventory-file=inventory --limit=local user.yml
-sudo -H -u user ansible-playbook --inventory-file=inventory --limit=local --ask-sudo-pass local.yml
+
+dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+
+sudo -H -u user ansible-playbook --inventory-file="${dir}/inventory" --limit=local --ask-sudo-pass "${dir}/local.yml"

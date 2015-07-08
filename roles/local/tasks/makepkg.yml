@@ -6,5 +6,6 @@
     - automake
     - binutils
     - fakeroot
+    - gcc
     - make
   sudo: yes

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Last tested with archlinux-2015.02.01-dual.iso
+# Last tested with archlinux-2015.11.01-dual.iso
 #
 # Make sure you are okay with $drive being reformatted
 drive=/dev/sda

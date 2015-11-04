@@ -4,7 +4,7 @@
   sudo: yes
 
 - name: "{{ name }} download"
-  get_url: url=https://aur.archlinux.org/packages/{{ name|list|batch(2)|first|join }}/{{ name }}/{{ name }}.tar.gz dest=/tmp
+  get_url: url=https://aur.archlinux.org/cgit/aur.git/snapshot/{{ name }}.tar.gz dest=/tmp
 
 - name: "{{ name }} untar"
   shell: chdir=/tmp creates={{ name }} tar xzf {{ name }}.tar.gz

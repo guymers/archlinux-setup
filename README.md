@@ -1,6 +1,6 @@
 Boot machine with archlinux dual iso
 
-    pacman -Sy git
+    pacman --cachedir=/tmp -Sy git
     git clone https://github.com/guymers/archlinux-setup
     ./archlinux-setup/setup.sh
 

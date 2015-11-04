@@ -4,21 +4,31 @@
 # Make sure you are okay with $drive being reformatted
 drive=/dev/sda
 encrypt=false
+swap="2G"
 hostname="arch"
 lang="en_AU.UTF-8"
 timezone="Australia/Queensland"
 
 dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+root_index=2
 
 sgdisk --clear -g $drive
 sgdisk -n 1:0:+512M -c 1:boot -t 1:ef00 $drive
-sgdisk -n 2:0:0 -c 2:root -t 2:8300 $drive
+if [ -n "$swap" ]; then
+  sgdisk -n 2:0:+$swap -c 2:swap -t 2:8200 $drive
+  ((root_index++))
+fi
+sgdisk -n $root_index:0:0 -c $root_index:root -t $root_index:8300 $drive
 
 boot="${drive}1"
-root="${drive}2"
+root="${drive}${root_index}"
 btrfs_options=noatime,space_cache,compress=lzo
 
 mkfs.fat -F32 $boot
+
+if [ -n "$swap" ]; then
+  mkswap "${drive}2"
+fi
 
 if [ "$encrypt" = true ] ; then
   cryptsetup -v --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 5000 --use-random luksFormat $root

@@ -1,4 +1,4 @@
-- include: ntp.yml
+- include: time.yml
 - include: makepkg.yml
 - { include: aur.yml, name: cower, dependencies: [ curl, openssl, yajl ] }
 - { include: aur.yml, name: pacaur, dependencies: [ expac, sudo ] }

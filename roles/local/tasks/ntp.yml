@@ -1,7 +1,0 @@
-- name: ntp
-  pacman: name=ntp state=present
-  sudo: yes
-
-- name: enable ntp
-  service: name=ntpd state=started enabled=yes
-  sudo: yes

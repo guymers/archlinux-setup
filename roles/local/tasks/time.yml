@@ -1,0 +1,7 @@
+- name: timesyncd config
+  copy: src=timesyncd.conf dest=/etc/systemd/timesyncd.conf
+  sudo: yes
+
+- name: enable timesyncd
+  shell: timedatectl set-ntp true
+  sudo: yes

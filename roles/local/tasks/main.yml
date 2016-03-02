@@ -1,7 +1,13 @@
 - include: time.yml
 - include: makepkg.yml
-- { include: aur.yml, name: cower, dependencies: [ curl, openssl, yajl ] }
-- { include: aur.yml, name: pacaur, dependencies: [ expac, sudo ] }
+- include: aur.yml
+  vars:
+    name: cower
+    dependencies: [ curl, openssl, yajl ]
+- include: aur.yml
+  vars:
+    name: pacaur
+    dependencies: [ expac, sudo, git ]
 - include: audio.yml
 - include: video.yml
 - include: window_manager.yml

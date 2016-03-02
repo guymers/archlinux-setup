@@ -1,6 +1,9 @@
 Boot machine with archlinux dual iso
 
-    pacman --cachedir=/tmp -Sy git
+Increase the [size of cowspace](https://bbs.archlinux.org/viewtopic.php?pid=1592688#p1592688)
+
+    mount -o remount,size=1G /run/archiso/cowspace
+    pacman --cachedir=/tmp -Sy --noconfirm git
     git clone https://github.com/guymers/archlinux-setup
     ./archlinux-setup/setup.sh
 
@@ -8,9 +11,14 @@ Reboot, login in as ```user``` with password ```user``` and run
 
     ./.archlinux-setup/run.sh
 
+Remove setup folder
+
+    rm -r .archlinux-setup
+
 ### Audio
-use alsamixer to set volume
+Use alsamixer to set volume
 ```sudo alsactl store```
 
 ### Notes
-make sure cow is turned off for virtualbox folders
+- Change root password or disable login
+- Make sure cow is turned off for VirtualBox folders

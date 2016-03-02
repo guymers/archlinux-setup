@@ -6,5 +6,6 @@
     - sysstat
     - net-tools
     - cifs-utils
+    - mlocate
     - unzip
-  sudo: yes
+  become: yes

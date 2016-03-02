@@ -3,4 +3,4 @@
   with_items:
     - rxvt-unicode
     - urxvt-perls
-  sudo: yes
+  become: yes

@@ -4,4 +4,4 @@
     - thunar
     - thunar-volman
     - gvfs
-  sudo: yes
+  become: yes

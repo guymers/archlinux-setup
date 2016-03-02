@@ -11,4 +11,4 @@
     - freetype2
     - ttf-ubuntu-font-family
     - ttf-dejavu
-  sudo: yes
+  become: yes

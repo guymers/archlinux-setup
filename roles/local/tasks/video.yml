@@ -13,4 +13,4 @@
     - xorg-xrdb
     - mplayer
     - smplayer
-  sudo: yes
+  become: yes

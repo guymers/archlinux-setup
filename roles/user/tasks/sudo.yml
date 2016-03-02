@@ -3,3 +3,6 @@
 
 - name: enable wheel group sudo
   copy: src=wheel dest=/etc/sudoers.d/wheel
+
+- name: disable sudo lecture
+  copy: src=lecture dest=/etc/sudoers.d/lecture

@@ -8,4 +8,4 @@
     - fakeroot
     - gcc
     - make
-  sudo: yes
+  become: yes

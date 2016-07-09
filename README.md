@@ -22,3 +22,16 @@ Use alsamixer to set volume
 ### Notes
 - Change root password or disable login
 - Make sure cow is turned off for VirtualBox folders
+
+
+### Development
+
+Serve the repository via
+
+    git daemon --base-path=.. --export-all --reuseaddr --informative-errors --verbose
+
+Clone with
+
+    git clone git://<ip>/archlinux-setup
+
+Make sure you commit changes so they are cloned across.

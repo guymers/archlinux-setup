@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 # Last tested with archlinux-2016.07.01-dual.iso
 #
@@ -12,6 +12,7 @@ readonly timezone="Australia/Queensland"
 readonly btrfs_options=noatime,space_cache,compress=lzo
 
 readonly dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+[ -d "/sys/firmware/efi" ] && efi=true || efi=false;
 root_index=2
 
 partition_prefix=""
@@ -89,14 +90,56 @@ arch-chroot /mnt mkinitcpio -p linux
 
 readonly root_uuid=$(arch-chroot /mnt blkid -s UUID -o value "$root")
 
-syslinux-install_update -i -a -m -c /mnt
-sed -i "s,UI menu.c32,#UI menu.c32," /mnt/boot/syslinux/syslinux.cfg
+if [ "$efi" = true ] ; then
+  # https://wiki.archlinux.org/index.php/syslinux#UEFI_Systems
+  readonly esp="/boot"
+  syslinux_config="$esp/EFI/syslinux/syslinux.cfg"
+  boot_relative_path="../.."
+  arch-chroot /mnt pacman -S --noconfirm efibootmgr
+  arch-chroot /mnt mkdir -p "$esp/EFI/syslinux"
+  arch-chroot /mnt cp -r /usr/lib/syslinux/efi64/* "$esp/EFI/syslinux/"
+  arch-chroot /mnt efibootmgr -c -d "$drive" -p 1 -l /EFI/syslinux/syslinux.efi -L "Archlinux"
+else
+  syslinux_config="/boot/syslinux/syslinux.cfg"
+  boot_relative_path=".."
+  syslinux-install_update -i -a -m -c /mnt
+fi
+arch-chroot /mnt cp /usr/share/hwdata/pci.ids "$(dirname "$syslinux_config")/pci.ids"
 if [ "$encrypt" = true ] ; then
   syslinux_root="/dev/mapper/cryptroot cryptdevice=UUID=$root_uuid:cryptroot"
 else
   syslinux_root="UUID=$root_uuid"
 fi
-sed -i "s,APPEND root=[a-z\/0-9]*,APPEND root=$syslinux_root rootflags=subvol=__active/rootvol," /mnt/boot/syslinux/syslinux.cfg
+cat << EOF > "/mnt/$syslinux_config"
+DEFAULT arch
+TIMEOUT 100
+# hold either Shift or Alt, or setting either Caps Lock or Scroll Lock, during boot to see prompt
+PROMPT 0
+
+LABEL arch
+  MENU LABEL Arch Linux
+  LINUX $boot_relative_path/vmlinuz-linux
+  APPEND root=$syslinux_root rootflags=subvol=__active/rootvol cgroup_enable=memory swapaccount=1
+  INITRD $boot_relative_path/initramfs-linux.img
+
+LABEL archfallback
+  MENU LABEL Arch Linux Fallback
+  LINUX $boot_relative_path/vmlinuz-linux
+  APPEND root=$syslinux_root rootflags=subvol=__active/rootvol
+  INITRD $boot_relative_path/initramfs-linux-fallback.img
+
+LABEL hdt
+  MENU LABEL HDT (Hardware Detection Tool)
+  COM32 hdt.c32
+
+LABEL reboot
+  MENU LABEL Reboot
+  COM32 reboot.c32
+
+LABEL poweroff
+  MENU LABEL Poweroff
+  COM32 poweroff.c32
+EOF
 
 mkdir /mnt/archlinux-setup
 mount --bind "$dir" /mnt/archlinux-setup

@@ -14,6 +14,11 @@ readonly btrfs_options=noatime,space_cache,compress=lzo
 readonly dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 root_index=2
 
+partition_prefix=""
+if echo "$drive" | grep -q -e "^/dev/nvme"; then
+  partition_prefix="p"
+fi
+
 sgdisk --clear -g "$drive"
 sgdisk -n 1:0:+512M -c 1:boot -t 1:ef00 "$drive"
 if [ -n "$swap" ]; then
@@ -22,21 +27,19 @@ if [ -n "$swap" ]; then
 fi
 sgdisk -n $root_index:0:0 -c $root_index:root -t $root_index:8300 "$drive"
 
-readonly boot="${drive}1"
-readonly root="${drive}${root_index}"
+readonly boot="${drive}${partition_prefix}1"
+readonly root="${drive}${partition_prefix}${root_index}"
 
 mkfs.fat -F32 "$boot"
 
 if [ -n "$swap" ]; then
-  mkswap "${drive}2"
+  mkswap "${drive}${partition_prefix}2"
 fi
 
 if [ "$encrypt" = true ] ; then
   cryptsetup -v --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 5000 --use-random --verify-passphrase luksFormat "$root"
   cryptsetup open "$root" cryptroot
-fi
 
-if [ "$encrypt" = true ] ; then
   install_drive=/dev/mapper/cryptroot
 else
   install_drive="$root"

@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
-# Last tested with archlinux-2016.07.01-dual.iso
+set -o pipefail
+
+# Last tested with archlinux-2016.12.01-dual.iso
 #
 # Make sure you are okay with $drive being reformatted
 readonly drive=/dev/sda
@@ -59,11 +61,11 @@ cd /
 umount /mnt
 mount -o $btrfs_options,subvol=__active/rootvol "$install_drive" /mnt
 mkdir /mnt/home
-mount -o $btrfs_options,subvol=__active/home "$install_drive" /mnt/home
+mount -o nodev,nosuid,$btrfs_options,subvol=__active/home "$install_drive" /mnt/home
 mkdir /mnt/var
-mount -o $btrfs_options,subvol=__active/var "$install_drive" /mnt/var
+mount -o nodev,nosuid,$btrfs_options,subvol=__active/var "$install_drive" /mnt/var
 mkdir /mnt/boot
-mount "$boot" /mnt/boot
+mount -o nodev,nosuid,noexec "$boot" /mnt/boot
 
 echo "Server = http://mirror.internode.on.net/pub/archlinux/\$repo/os/\$arch" > /etc/pacman.d/mirrorlist
 echo "#Server = http://ftp.iinet.net.au/pub/archlinux/\$repo/os/\$arch" >> /etc/pacman.d/mirrorlist
@@ -144,6 +146,10 @@ EOF
 mkdir /mnt/archlinux-setup
 mount --bind "$dir" /mnt/archlinux-setup
 arch-chroot /mnt ansible-playbook --inventory-file=/archlinux-setup/inventory --limit=local /archlinux-setup/user.yml
+arch-chroot /mnt systemctl enable fstrim.timer
+if [ "$encrypt" = true ] ; then
+  arch-chroot /mnt systemctl enable btrfs-scrub@dev-mapper-cryptroot.timer
+fi
 umount /mnt/archlinux-setup
 rm -r /mnt/archlinux-setup
 

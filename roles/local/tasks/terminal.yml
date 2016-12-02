@@ -3,4 +3,6 @@
   with_items:
     - rxvt-unicode
     - urxvt-perls
+    - x11-ssh-askpass
+    - xclip
   become: yes

@@ -8,4 +8,6 @@
     - cifs-utils
     - mlocate
     - unzip
+    - smartmontools
+    - lm_sensors
   become: yes

@@ -12,5 +12,4 @@
     - xorg-xinit
     - xorg-xrdb
     - mplayer
-    - smplayer
   become: yes

@@ -3,7 +3,7 @@
 - include: aur.yml
   vars:
     name: cower
-    dependencies: [ curl, openssl, yajl ]
+    dependencies: [ curl, yajl ]
 - include: aur.yml
   vars:
     name: pacaur

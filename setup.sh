@@ -2,12 +2,12 @@
 set -e
 set -o pipefail
 
-# Last tested with archlinux-2016.12.01-dual.iso
+# Last tested with archlinux-2017.08.01-dual.iso
 #
 # Make sure you are okay with $drive being reformatted
 readonly drive=/dev/sda
 readonly encrypt=false
-readonly swap="2G"
+readonly swap=""
 readonly hostname="arch"
 readonly lang="en_AU.UTF-8"
 readonly timezone="Australia/Queensland"
@@ -82,6 +82,8 @@ arch-chroot /mnt locale-gen
 echo "LANG=$lang" > /mnt/etc/locale.conf
 
 echo "blacklist pcspkr" > /mnt/etc/modprobe.d/nobeep.conf
+
+echo "vm.swappiness=1" > /mnt/etc/sysctl.d/swappiness.conf
 
 # btrfs does not need to fsck on boot
 sed -i "/^HOOKS/ s/ fsck//" /mnt/etc/mkinitcpio.conf

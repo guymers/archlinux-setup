@@ -1,0 +1,2 @@
+[local]
+localhost  ansible_connection=local  ansible_become_method=sudo

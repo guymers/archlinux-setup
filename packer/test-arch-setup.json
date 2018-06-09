@@ -1,0 +1,42 @@
+{
+  "variables": {
+    "headless": "true",
+    "firmware": "bios",
+    "cpus": "2",
+    "memory": "1024"
+  },
+  "builders": [
+    {
+      "type": "virtualbox-iso",
+      "vm_name": "test-arch-setup",
+      "output_directory": "target/test-arch-setup",
+      "iso_url": "http://mirror.rackspace.com/archlinux/iso/2018.06.01/archlinux-2018.06.01-x86_64.iso",
+      "iso_checksum": "7bf795015e901eae74b030cdd7341f4860b192ec",
+      "iso_checksum_type": "sha1",
+      "guest_os_type": "ArchLinux_64",
+      "guest_additions_mode": "disable",
+      "http_directory": "http",
+      "boot_wait": "10s",
+      "boot_command": [
+        "<enter><wait10><wait10>",
+        "wget -qO- http://{{ .HTTPIP }}:{{ .HTTPPort }}/setup.tar | tar -x<enter><wait5>",
+        "wget -qO- http://{{ .HTTPIP }}:{{ .HTTPPort }}/run_setup.sh > run_setup.sh<enter><wait5>",
+        "bash run_setup.sh<enter>"
+      ],
+      "ssh_username": "user",
+      "ssh_password": "user",
+      "ssh_timeout": "15m",
+      "shutdown_command": "echo 'user' | sudo -S shutdown -P now",
+      "headless" : "{{ user `headless`}}",
+      "disk_size": 10240,
+      "vboxmanage": [
+        ["modifyvm", "{{.Name}}", "--vrde", "off"],
+        ["modifyvm", "{{.Name}}", "--vram", "32"],
+        ["modifyvm", "{{.Name}}", "--firmware", "{{user `firmware`}}"],
+        ["modifyvm", "{{.Name}}", "--cpus", "{{user `cpus`}}"],
+        ["modifyvm", "{{.Name}}", "--memory", "{{user `memory`}}"]
+      ]
+    }
+  ],
+  "provisioners": []
+}

@@ -2,12 +2,8 @@
 - include: makepkg.yml
 - include: aur.yml
   vars:
-    name: cower
-    dependencies: [ curl, yajl ]
-- include: aur.yml
-  vars:
-    name: pacaur
-    dependencies: [ expac, sudo, git ]
+    name: trizen
+    dependencies: [ git, pacutils, perl-libwww, perl-term-ui, perl-json, perl-data-dump, perl-lwp-protocol-https, perl-term-readline-gnu ]
 - include: audio.yml
 - include: video.yml
 - include: window_manager.yml

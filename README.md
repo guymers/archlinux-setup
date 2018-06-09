@@ -40,3 +40,5 @@ Run the setup script
     ./archlinux-setup/setup.sh
 
 Make sure you commit changes so they are cloned across.
+
+The `packer` folder contains scripts which can also assist in testing.

@@ -1,2 +1,0 @@
-# python -c 'import crypt; print crypt.crypt("user", "$1$SomeSalt$")'
-password: $1$SomeSalt$i5jrar05MTZEfqSa2kEkg1

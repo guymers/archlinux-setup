@@ -2,7 +2,7 @@
 set -e
 set -o pipefail
 
-# Last tested with archlinux-2017.08.01-dual.iso
+# Last tested with archlinux-2018.06.01-x86_64.iso
 #
 # Make sure you are okay with $drive being reformatted
 readonly drive=/dev/sda
@@ -147,7 +147,7 @@ EOF
 
 mkdir /mnt/archlinux-setup
 mount --bind "$dir" /mnt/archlinux-setup
-arch-chroot /mnt ansible-playbook --inventory-file=/archlinux-setup/inventory --limit=local /archlinux-setup/user.yml
+arch-chroot /mnt ansible-playbook --inventory-file=/archlinux-setup/ansible/inventory --limit=local /archlinux-setup/ansible/user.yml
 arch-chroot /mnt systemctl enable fstrim.timer
 if [ "$encrypt" = true ] ; then
   arch-chroot /mnt systemctl enable btrfs-scrub@dev-mapper-cryptroot.timer
@@ -158,7 +158,7 @@ rm -r /mnt/archlinux-setup
 pacman -Sy --noconfirm rsync
 mkdir /mnt/home/user/.archlinux-setup
 # copy setup folder excluding hidden files
-rsync -av "$dir/" --exclude=".*" /mnt/home/user/.archlinux-setup/
+rsync -av "$dir/ansible/" /mnt/home/user/.archlinux-setup/
 arch-chroot /mnt chown -R user:user /home/user/.archlinux-setup
 
 arch-chroot /mnt systemctl enable dhcpcd

@@ -3,7 +3,6 @@
   with_items:
     - gtk2
     - gtk-engines
-    - gtk-engine-aurora
     - gtk-engine-murrine
     - lxappearance
     - openbox
@@ -11,4 +10,5 @@
     - freetype2
     - ttf-ubuntu-font-family
     - ttf-dejavu
+    - viewnior
   become: yes

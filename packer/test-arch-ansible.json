@@ -1,0 +1,39 @@
+{
+  "variables": {
+    "headless": "true",
+    "firmware": "bios",
+    "cpus": "2",
+    "memory": "1024"
+  },
+  "builders": [
+    {
+      "type": "virtualbox-ovf",
+      "vm_name": "test-arch-ansible",
+      "output_directory": "target/test-arch-ansible",
+      "source_path": "target/test-arch-setup/test-arch-setup.ovf",
+      "guest_additions_mode": "disable",
+      "boot_wait": "10s",
+      "ssh_username": "user",
+      "ssh_password": "user",
+      "ssh_timeout": "15m",
+      "shutdown_command": "echo 'user' | sudo -S shutdown -P now",
+      "headless" : "{{ user `headless`}}",
+      "vboxmanage": [
+        ["modifyvm", "{{.Name}}", "--vrde", "off"],
+        ["modifyvm", "{{.Name}}", "--vram", "32"],
+        ["modifyvm", "{{.Name}}", "--firmware", "{{user `firmware`}}"],
+        ["modifyvm", "{{.Name}}", "--cpus", "{{user `cpus`}}"],
+        ["modifyvm", "{{.Name}}", "--memory", "{{user `memory`}}"]
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "ansible-local",
+      "inventory_file": "../ansible/inventory",
+      "extra_arguments": "--limit local --extra-vars \"ansible_become_pass=user\"",
+      "playbook_dir": "../ansible",
+      "playbook_file": "../ansible/local.yml"
+    }
+  ]
+}

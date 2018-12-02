@@ -2,7 +2,7 @@
 set -e
 set -o pipefail
 
-# Last tested with archlinux-2018.06.01-x86_64.iso
+# Last tested with archlinux-2018.12.01-x86_64.iso
 #
 # Make sure you are okay with $drive being reformatted
 readonly drive=/dev/sda

@@ -1,8 +1,9 @@
 - name: audio packages
-  pacman: name={{ item }} state=present
-  with_items:
-    - alsa-utils
-    - alsa-plugins
-    - mpd
-    - gmpc
+  pacman:
+    name:
+      - alsa-utils
+      - alsa-plugins
+      - mpd
+      - gmpc
+    state: present
   become: yes

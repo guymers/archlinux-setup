@@ -1,7 +1,8 @@
 - name: file manager packages
-  pacman: name={{ item }} state=present
-  with_items:
-    - thunar
-    - thunar-volman
-    - gvfs
+  pacman:
+    name:
+      - thunar
+      - thunar-volman
+      - gvfs
+    state: present
   become: yes

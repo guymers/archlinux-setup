@@ -1,6 +1,7 @@
 - name: "{{ name }} dependencies"
-  pacman: name={{ item }} state=present
-  with_items: "{{ dependencies }}"
+  pacman:
+    name: "{{ dependencies }}"
+    state: present
   become: yes
 
 - name: "{{ name }} download"

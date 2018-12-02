@@ -1,12 +1,13 @@
 # these packages are from base-devel but it requires a user selection
 - name: makepkg dependencies
-  pacman: name={{ item }} state=present
-  with_items:
-    - autoconf
-    - automake
-    - binutils
-    - fakeroot
-    - gcc
-    - make
-    - pkg-config
+  pacman:
+    name:
+      - autoconf
+      - automake
+      - binutils
+      - fakeroot
+      - gcc
+      - make
+      - pkg-config
+    state: present
   become: yes

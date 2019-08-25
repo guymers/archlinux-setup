@@ -10,3 +10,4 @@
 - include: file_manager.yml
 - include: terminal.yml
 - include: util.yml
+- include: dns.yml

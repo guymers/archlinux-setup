@@ -4,6 +4,6 @@
       - alsa-utils
       - alsa-plugins
       - mpd
-      - gmpc
+      - ncmpc
     state: present
   become: yes

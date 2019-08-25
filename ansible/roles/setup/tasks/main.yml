@@ -1,2 +1,3 @@
 - include: sudo.yml
 - include: user.yml
+- include: secure_boot.yml

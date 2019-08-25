@@ -1,7 +1,7 @@
 {
   "variables": {
-    "headless": "true",
-    "firmware": "bios",
+    "headless": "false",
+    "firmware": "efi",
     "cpus": "2",
     "memory": "1024"
   },

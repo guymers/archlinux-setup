@@ -6,3 +6,11 @@
       - gvfs
     state: present
   become: yes
+
+# https://wiki.archlinux.org/index.php/Thunar#Solving_problem_with_slow_cold_start
+- name: Don't allow gvfs to auto mount
+  lineinfile:
+    path: /usr/share/gvfs/mounts/network.mount
+    regexp: '^AutoMount='
+    line: AutoMount=false
+  become: yes

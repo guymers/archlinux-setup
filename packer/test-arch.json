@@ -1,7 +1,7 @@
 {
   "variables": {
-    "headless": "true",
-    "firmware": "bios",
+    "headless": "false",
+    "firmware": "efi",
     "cpus": "2",
     "memory": "1024"
   },
@@ -10,8 +10,8 @@
       "type": "virtualbox-iso",
       "vm_name": "test-arch",
       "output_directory": "target/test-arch",
-      "iso_url": "http://mirror.rackspace.com/archlinux/iso/2018.12.01/archlinux-2018.12.01-x86_64.iso",
-      "iso_checksum": "ed6b50cf9f375cbea6cf1b138c9ad42b5cb28745",
+      "iso_url": "http://mirror.rackspace.com/archlinux/iso/2019.08.01/archlinux-2019.08.01-x86_64.iso",
+      "iso_checksum": "4dae830315df4684b4351348f1a0fc49b5c08aa7",
       "iso_checksum_type": "sha1",
       "guest_os_type": "ArchLinux_64",
       "guest_additions_mode": "disable",
@@ -26,7 +26,10 @@
       "ssh_password": "user",
       "ssh_timeout": "15m",
       "shutdown_command": "echo 'user' | sudo -S shutdown -P now",
-      "headless" : "{{ user `headless`}}",
+      "headless": "{{ user `headless`}}",
+      "iso_interface": "sata",
+      "hard_drive_interface": "sata",
+      "hard_drive_nonrotational": true,
       "disk_size": 10240,
       "vboxmanage": [
         ["modifyvm", "{{.Name}}", "--vrde", "off"],

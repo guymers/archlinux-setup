@@ -3,14 +3,14 @@
     name:
       - xterm
       - xf86-video-vesa
-      - xf86-video-ati
       - xf86-video-intel
-      - xf86-video-nouveau
       - libva-vdpau-driver
       - mesa-vdpau
       - xorg-server
       - xorg-xinit
+      - xorg-xrandr
       - xorg-xrdb
-      - mplayer
+      - xscreensaver
+      - mpv
     state: present
   become: yes

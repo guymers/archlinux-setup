@@ -2,9 +2,7 @@ To test the current version run:
 
     packer build test-arch.json
 
-To not run headless use the command flag `-var 'headless=false'`
-
-To test against a machine using UEFI use the command flag `-var 'firmware=efi'`
+To run headless use the command flag `-var 'headless=true'`
 
 During development run:
 

@@ -2,6 +2,7 @@
   pacman:
     name:
       - dnsmasq
+      - openresolv
     state: present
   become: yes
 

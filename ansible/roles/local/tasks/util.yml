@@ -1,16 +1,24 @@
+- name: ex-base packages
+  pacman:
+    name:
+      - diffutils
+      - less
+      - man-db
+      - man-pages
+    state: present
+  become: yes
+
 - name: util packages
   pacman:
     name:
       - bash-completion
-      - rsync
-      - sysstat
-      - net-tools
-      - cifs-utils
-      - unzip
-      - smartmontools
       - lm_sensors
+      - net-tools
+      - rsync
+      - smartmontools
+      - sysstat
       - ufw
-      - wpa_supplicant
+      - unzip
     state: present
   become: yes
 

@@ -2,8 +2,6 @@
   pacman:
     name:
       - xterm
-      - xf86-video-vesa
-      - xf86-video-intel
       - libva-vdpau-driver
       - mesa-vdpau
       - xorg-server

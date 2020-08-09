@@ -2,7 +2,7 @@
 set -e
 set -o pipefail
 
-wget -qO- https://git.io/archlinux-setup | tar --transform 's/-master//' -xz
+wget -s https://git.io/archlinux-setup | tar --transform 's/-master//' -xz
 ./archlinux-setup/setup.sh
 
 # inline the sudo password to avoid the prompt

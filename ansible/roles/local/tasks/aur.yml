@@ -14,10 +14,10 @@
     unarchive: src=https://aur.archlinux.org/cgit/aur.git/snapshot/{{ name }}.tar.gz dest=/tmp copy=no
 
   - name: "{{ name }} build"
-    shell: chdir=/tmp/{{ name }} creates={{ name }}.pkg.tar.gz makepkg -f --skippgpcheck && cp *.pkg.tar.xz {{ name }}.pkg.tar.gz
+    shell: chdir=/tmp/{{ name }} creates={{ name }}.pkg.tar makepkg -f --skippgpcheck && mv *.pkg.tar {{ name }}.pkg.tar
 
   - name: "{{ name }} install"
-    shell: chdir=/tmp/{{ name }} pacman --noconfirm -U {{ name }}.pkg.tar.gz
+    shell: chdir=/tmp/{{ name }} pacman --noconfirm -U {{ name }}.pkg.tar
     become: yes
 
   when: installed is failed

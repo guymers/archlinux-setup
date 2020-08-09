@@ -2,7 +2,7 @@
 set -e
 set -o pipefail
 
-# Last tested with archlinux-2019.08.01-x86_64.iso
+# Last tested with archlinux-2020.08.01-x86_64.iso
 #
 # Make sure you are okay with $drive being reformatted
 readonly drive=/dev/sda
@@ -69,9 +69,7 @@ mount -o nodev,nosuid,$btrfs_options,subvol=__active/home "$install_drive" /mnt/
 mkdir /mnt/boot
 mount -o nodev,nosuid,noexec "$boot" /mnt/boot
 
-echo "Server = http://mirror.internode.on.net/pub/archlinux/\$repo/os/\$arch" > /etc/pacman.d/mirrorlist
-echo "#Server = http://ftp.iinet.net.au/pub/archlinux/\$repo/os/\$arch" >> /etc/pacman.d/mirrorlist
-pacstrap /mnt base mtools gptfdisk efibootmgr openssh vim ansible
+pacstrap /mnt base linux linux-firmware cryptsetup dhcpcd efibootmgr openssh wpa_supplicant vim ansible
 
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
@@ -84,8 +82,14 @@ echo "LANG=$lang" > /mnt/etc/locale.conf
 
 echo "blacklist pcspkr" > /mnt/etc/modprobe.d/nobeep.conf
 
+echo "kernel.sysrq=1" >> /mnt/etc/sysctl.d/reisub.conf
+
 echo "vm.oom_kill_allocating_task=1" > /mnt/etc/sysctl.d/vm.conf
 echo "vm.swappiness=5" >> /mnt/etc/sysctl.d/vm.conf
+
+echo "MAKEFLAGS='-j4'" >> /mnt/etc/makepkg.conf
+echo "PKGEXT='.pkg.tar'" >> /mnt/etc/makepkg.conf
+echo "SRCEXT='.src.tar'" >> /mnt/etc/makepkg.conf
 
 # btrfs does not need to fsck on boot
 sed -i "/^HOOKS/ s/ fsck//" /mnt/etc/mkinitcpio.conf

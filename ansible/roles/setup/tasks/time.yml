@@ -1,0 +1,5 @@
+- name: timesyncd config
+  copy: src=timesyncd.conf dest=/etc/systemd/
+
+- name: enable timesyncd
+  shell: timedatectl set-ntp true

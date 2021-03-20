@@ -1,0 +1,22 @@
+- name: install resolvconf
+  pacman: name=systemd-resolvconf state=present
+
+- name: create /etc/systemd/resolved.conf.d directory
+  file:
+    path: /etc/systemd/resolved.conf.d/
+    state: directory
+    mode: '0755'
+
+- name: systemd-resolved config
+  copy: src=resolved.conf.d/cloudflare.conf dest=/etc/systemd/resolved.conf.d/
+
+- name: enable systemd-resolved
+  systemd:
+    name: systemd-resolved.service
+    enabled: yes
+
+- name: symlink /etc/resolv.conf to systemd-resolved
+  file:
+    src: /run/systemd/resolve/stub-resolv.conf
+    dest: /etc/resolv.conf
+    state: link

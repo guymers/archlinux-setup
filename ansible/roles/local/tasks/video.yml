@@ -1,8 +1,6 @@
 - name: video packages
   pacman:
     name:
-      - xterm
-      - libva-vdpau-driver
       - mesa-vdpau
       - xorg-server
       - xorg-xinit

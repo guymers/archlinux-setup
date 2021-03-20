@@ -1,6 +1,7 @@
 - name: terminal packages
   pacman:
     name:
+      - xterm
       - rxvt-unicode
       - urxvt-perls
       - x11-ssh-askpass

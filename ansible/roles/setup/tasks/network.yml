@@ -1,0 +1,16 @@
+- name: systemd-network config
+  copy: src=network/{{ item.src }} dest=/etc/systemd/network/
+  with_items:
+    - { src: '20-wired.network' }
+    - { src: '25-wireless.network' }
+
+- name: enable systemd-networkd
+  systemd:
+    name: systemd-networkd.service
+    enabled: yes
+
+- name: disable systemd-networkd-wait-online
+  systemd:
+    name: systemd-networkd-wait-online.service
+    enabled: no
+    masked: yes

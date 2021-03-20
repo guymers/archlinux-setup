@@ -1,8 +1,7 @@
 - name: audio packages
   pacman:
     name:
-      - alsa-utils
-      - alsa-plugins
+      - pipewire
       - mpd
       - xfmpc
     state: present

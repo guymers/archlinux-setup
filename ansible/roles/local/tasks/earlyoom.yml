@@ -1,0 +1,17 @@
+- name: earlyoom packages
+  pacman:
+    name:
+      - earlyoom
+    state: present
+  become: yes
+
+- name: earlyoom config
+  copy: src=earlyoom.default dest=/etc/default/earlyoom
+  become: yes
+
+- name: enable earlyoom
+  systemd:
+    name: earlyoom.service
+    state: started
+    enabled: yes
+  become: yes

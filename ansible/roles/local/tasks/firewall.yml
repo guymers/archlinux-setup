@@ -1,0 +1,13 @@
+- name: firewall packages
+  pacman:
+    name:
+      - ufw
+    state: present
+  become: yes
+
+- name: enable ufw
+  systemd:
+    name: ufw.service
+    state: started
+    enabled: yes
+  become: yes

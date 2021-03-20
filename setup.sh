@@ -2,10 +2,10 @@
 set -e
 set -o pipefail
 
-# Last tested with archlinux-2020.08.01-x86_64.iso
+# Last tested with archlinux-2021.03.01-x86_64.iso
 #
 # Make sure you are okay with $drive being reformatted
-readonly drive=/dev/sda
+readonly drive="${ARCH_SETUP_DRIVE:-/dev/sd<X>}"
 readonly encrypt=false
 readonly swap="" # set to a value if you want swap
 readonly hostname="arch"
@@ -69,7 +69,7 @@ mount -o nodev,nosuid,$btrfs_options,subvol=__active/home "$install_drive" /mnt/
 mkdir /mnt/boot
 mount -o nodev,nosuid,noexec "$boot" /mnt/boot
 
-pacstrap /mnt base linux linux-firmware cryptsetup dhcpcd efibootmgr openssh wpa_supplicant vim ansible
+pacstrap /mnt base linux linux-firmware cryptsetup efibootmgr openssh wpa_supplicant vim ansible
 
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
@@ -105,20 +105,9 @@ else
   initrd_root="UUID=$root_uuid"
 fi
 
-# https://wiki.archlinux.org/index.php/Systemd-boot
 readonly esp="/boot"
 arch-chroot /mnt bootctl --path="$esp" install
-cat << EOF > "/mnt/usr/share/libalpm/hooks/systemd-boot.hook"
-[Trigger]
-Type = Package
-Operation = Upgrade
-Target = systemd
 
-[Action]
-Description = Updating systemd-boot...
-When = PostTransaction
-Exec = /usr/bin/bootctl update
-EOF
 cat << EOF > "/mnt/$esp/loader/loader.conf"
 default  arch
 timeout  3
@@ -150,7 +139,6 @@ mkdir /mnt/home/user/.archlinux-setup
 rsync -av "$dir/ansible/" /mnt/home/user/.archlinux-setup/
 arch-chroot /mnt chown -R user:user /home/user/.archlinux-setup
 
-arch-chroot /mnt systemctl enable dhcpcd
 arch-chroot /mnt bash -c "echo yes" | pacman -Scc
 
 arch-chroot /mnt systemctl enable fstrim.timer
@@ -164,5 +152,3 @@ echo ""
 echo ""
 echo "Setup complete, reboot, log in as user (password is user), and run ./.archlinux-setup/run.sh"
 echo ""
-echo "For secure boot support run:"
-echo "  efibootmgr --verbose --disk $driver --part 1 --create --label 'PreLoader' --loader /EFI/systemd/PreLoader.efi"

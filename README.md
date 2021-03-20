@@ -1,15 +1,17 @@
 Boot machine with an Arch Linux dual iso and run
 
-    wget -qO- https://git.io/archlinux-setup | tar --transform 's/-master//' -xz
+    curl -L https://git.io/archlinux-setup | tar --transform 's/-master//' -xz
+    # modify $drive in `setup.sh` or set `ARCH_SETUP_DRIVE`
     ./archlinux-setup/setup.sh
 
 If using secure boot follow these [instructions](https://unix.stackexchange.com/a/361772) to create the boot media:
 
     trizen -S preloader-signed
-    sudo dd bs=4M if=archlinux-2019.08.01-x86_64.iso of=/dev/sd<X> status=progress oflag=sync
+    sudo dd bs=4M if=archlinux-2021.03.01-x86_64.iso of=/dev/sd<X> status=progress oflag=sync
     sudo mount /dev/sd<X>2 /mnt
-    sudo cp /usr/share/preloader-signed/PreLoader.efi /mnt/EFI/boot/bootx64.efi
-    sudo cp /usr/share/preloader-signed/HashTool.efi /mnt/EFI/boot/
+    sudo mv /mnt/EFI/BOOT/BOOTx64.EFI /mnt/EFI/BOOT/loader.efi
+    sudo cp /usr/share/preloader-signed/PreLoader.efi /mnt/EFI/BOOT/bootx64.efi
+    sudo cp /usr/share/preloader-signed/HashTool.efi /mnt/EFI/BOOT/
     sudo umount /mnt
 
 And these [steps](https://wiki.archlinux.org/index.php?title=Secure_Boot&oldid=559440#Booting_an_install_media) when booting:
@@ -25,9 +27,6 @@ Reboot, login in as `user` with password `user` and run
 Remove setup folder
 
     rm -r .archlinux-setup
-
-### Audio
-Use alsamixer to set volume `sudo alsactl store`
 
 ### Notes
 - Change root password or disable login

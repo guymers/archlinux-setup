@@ -17,14 +17,6 @@
       - rsync
       - smartmontools
       - sysstat
-      - ufw
       - unzip
     state: present
-  become: yes
-
-- name: enable ufw
-  systemd:
-    name: ufw.service
-    state: started
-    enabled: yes
   become: yes

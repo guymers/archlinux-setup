@@ -1,3 +1,6 @@
 - include: sudo.yml
 - include: user.yml
 - include: secure_boot.yml
+- include: time.yml
+- include: dns.yml
+- include: network.yml

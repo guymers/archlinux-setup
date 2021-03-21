@@ -133,6 +133,10 @@ arch-chroot /mnt ansible-playbook --inventory-file=/archlinux-setup/ansible/inve
 umount /mnt/archlinux-setup
 rm -r /mnt/archlinux-setup
 
+# avoid device or resource busy when running from inside chroot
+rm /mnt/etc/resolv.conf
+arch-chroot /mnt ln -s /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+
 pacman -Sy --noconfirm rsync
 mkdir /mnt/home/user/.archlinux-setup
 # copy setup folder excluding hidden files
@@ -147,6 +151,11 @@ arch-chroot /mnt systemctl enable fstrim.timer
 btrfs_scrub_device=${root//[\/]/-} # replace / with -
 btrfs_scrub_device=${btrfs_scrub_device#"-"} # remove leading -
 arch-chroot /mnt ln -s /usr/lib/systemd/system/btrfs-scrub@.timer "/etc/systemd/system/multi-user.target.wants/btrfs-scrub@$btrfs_scrub_device.timer"
+
+if bootctl status | grep 'Secure Boot' | cut -d ":" -f 2 | grep "enabled" ; then
+  # https://wiki.archlinux.org/index.php/Unified_Extensible_Firmware_Interface/Secure_Boot#Set_up_PreLoader
+  efibootmgr --verbose --disk "$drive" --part 1 --create --label 'PreLoader' --loader /EFI/systemd/PreLoader.efi
+fi
 
 echo ""
 echo ""

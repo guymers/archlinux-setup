@@ -2,6 +2,8 @@
   pacman:
     name:
       - pipewire
+      - pipewire-pulse
+      - pavucontrol
       - mpd
       - xfmpc
     state: present

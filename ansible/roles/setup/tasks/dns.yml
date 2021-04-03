@@ -1,4 +1,4 @@
-- name: install resolvconf
+- name: install systemd-resolvconf
   pacman: name=systemd-resolvconf state=present
 
 - name: create /etc/systemd/resolved.conf.d directory

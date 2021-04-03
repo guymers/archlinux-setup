@@ -69,7 +69,7 @@ mount -o nodev,nosuid,$btrfs_options,subvol=__active/home "$install_drive" /mnt/
 mkdir /mnt/boot
 mount -o nodev,nosuid,noexec "$boot" /mnt/boot
 
-pacstrap /mnt base linux linux-firmware cryptsetup efibootmgr openssh wpa_supplicant vim ansible
+pacstrap /mnt base linux linux-firmware cryptsetup efibootmgr openssh wpa_supplicant pacman-contrib vim ansible
 
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
@@ -148,9 +148,7 @@ arch-chroot /mnt bash -c "echo yes" | pacman -Scc
 arch-chroot /mnt systemctl enable fstrim.timer
 #arch-chroot /mnt systemctl enable btrfs-scrub@-.timer
 # the above does not work during install so just create the system link manually
-btrfs_scrub_device=${root//[\/]/-} # replace / with -
-btrfs_scrub_device=${btrfs_scrub_device#"-"} # remove leading -
-arch-chroot /mnt ln -s /usr/lib/systemd/system/btrfs-scrub@.timer "/etc/systemd/system/multi-user.target.wants/btrfs-scrub@$btrfs_scrub_device.timer"
+arch-chroot /mnt ln -s /usr/lib/systemd/system/btrfs-scrub@.timer "/etc/systemd/system/timers.target.wants/btrfs-scrub@-.timer"
 
 if bootctl status | grep 'Secure Boot' | cut -d ":" -f 2 | grep "enabled" ; then
   # https://wiki.archlinux.org/index.php/Unified_Extensible_Firmware_Interface/Secure_Boot#Set_up_PreLoader

@@ -8,8 +8,10 @@
       - openbox
       - obconf
       - freetype2
-      - ttf-ubuntu-font-family
       - ttf-dejavu
+      - ttf-ubuntu-font-family
+      - elementary-icon-theme
+      - xcursor-vanilla-dmz
       - viewnior
     state: present
   become: yes

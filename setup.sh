@@ -2,7 +2,7 @@
 set -e
 set -o pipefail
 
-# Last tested with archlinux-2021.03.01-x86_64.iso
+# Last tested with archlinux-2021.07.01-x86_64.iso
 #
 # Make sure you are okay with $drive being reformatted
 readonly drive="${ARCH_SETUP_DRIVE:-/dev/sd<X>}"
@@ -11,7 +11,7 @@ readonly swap="" # set to a value if you want swap
 readonly hostname="arch"
 readonly lang="en_AU.UTF-8"
 readonly timezone="Australia/Queensland"
-readonly btrfs_options=noatime,space_cache,compress=lzo
+readonly btrfs_options=noatime,compress-force=zstd:1
 
 readonly dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
@@ -109,10 +109,10 @@ readonly esp="/boot"
 arch-chroot /mnt bootctl --path="$esp" install
 
 cat << EOF > "/mnt/$esp/loader/loader.conf"
-default  arch
+default  arch.conf
 timeout  3
-console-mode max
 editor   no
+console-mode max
 EOF
 cat << EOF > "/mnt/$esp/loader/entries/arch.conf"
 title   Arch Linux

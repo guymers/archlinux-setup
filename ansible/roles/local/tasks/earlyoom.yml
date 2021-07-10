@@ -9,6 +9,13 @@
   copy: src=earlyoom.default dest=/etc/default/earlyoom
   become: yes
 
+- name: disable systemd-oomd
+  systemd:
+    name: systemd-oomd.service
+    enabled: no
+    masked: yes
+  become: yes
+
 - name: enable earlyoom
   systemd:
     name: earlyoom.service

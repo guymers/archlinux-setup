@@ -17,8 +17,8 @@ source "qemu" "arch-setup" {
   vm_name = "test-arch.qcow2"
   format = "qcow2"
   output_directory = "target/test-arch/"
-  iso_url = "http://mirror.rackspace.com/archlinux/iso/2021.07.01/archlinux-2021.07.01-x86_64.iso"
-  iso_checksum = "sha1:5804cefb2e5e7498cb15f38180cb3ebc094f6955"
+  iso_url = "http://mirror.rackspace.com/archlinux/iso/2022.04.05/archlinux-2022.04.05-x86_64.iso"
+  iso_checksum = "sha256:5934a1561f33a49574ba8bf6dbbdbd18c933470de4e2f7562bec06d24f73839b"
   headless = var.headless
   cpus = var.cpus
   memory = var.memory
@@ -36,7 +36,7 @@ source "qemu" "arch-setup" {
 
   ssh_username = "user"
   ssh_password = "user"
-  ssh_timeout = "15m"
+  ssh_timeout = "30m"
   ssh_handshake_attempts = 100
 
   shutdown_command = "echo 'user' | sudo -S shutdown -P now"

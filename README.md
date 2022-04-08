@@ -7,7 +7,7 @@ Boot machine with an Arch Linux dual iso and run
 If using secure boot follow these [instructions](https://unix.stackexchange.com/a/361772) to create the boot media:
 
     trizen -S preloader-signed
-    sudo dd bs=4M if=archlinux-2021.03.01-x86_64.iso of=/dev/sd<X> status=progress oflag=sync
+    sudo dd bs=4M if=archlinux-2022.04.05-x86_64.iso of=/dev/sd<X> status=progress oflag=sync
     sudo mount /dev/sd<X>2 /mnt
     sudo mv /mnt/EFI/BOOT/BOOTx64.EFI /mnt/EFI/BOOT/loader.efi
     sudo cp /usr/share/preloader-signed/PreLoader.efi /mnt/EFI/BOOT/bootx64.efi

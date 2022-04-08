@@ -4,7 +4,5 @@
       - pipewire
       - pipewire-pulse
       - pavucontrol
-      - mpd
-      - xfmpc
     state: present
   become: yes

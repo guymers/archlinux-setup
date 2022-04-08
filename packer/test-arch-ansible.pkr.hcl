@@ -32,7 +32,7 @@ source "qemu" "arch-ansible" {
 
   ssh_username = "user"
   ssh_password = "user"
-  ssh_timeout = "15m"
+  ssh_timeout = "30m"
 
   shutdown_command = "echo 'user' | sudo -S shutdown -P now"
 }

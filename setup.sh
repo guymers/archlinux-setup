@@ -2,7 +2,7 @@
 set -e
 set -o pipefail
 
-# Last tested with archlinux-2021.07.01-x86_64.iso
+# Last tested with archlinux-2022.04.05-x86_64.iso
 #
 # Make sure you are okay with $drive being reformatted
 readonly drive="${ARCH_SETUP_DRIVE:-/dev/sd<X>}"

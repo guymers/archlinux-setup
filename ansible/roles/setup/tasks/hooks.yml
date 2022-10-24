@@ -5,9 +5,9 @@
     mode: '0755'
 
 # https://wiki.archlinux.org/index.php/Systemd-boot#Automatic_update
-- name: systemd-boot pacman hook
+- name: pacman hook systemd-boot
   copy: src=hooks/100-systemd-boot.hook dest=/etc/pacman.d/hooks/
 
-# https://wiki.archlinux.org/index.php/Systemd-boot#Automatic_update
-- name: cache cleanup pacman hook
+# https://aur.archlinux.org/packages/pacman-cleanup-hook
+- name: pacman hook cache cleanup
   copy: src=hooks/999-cache-clean.hook dest=/etc/pacman.d/hooks/

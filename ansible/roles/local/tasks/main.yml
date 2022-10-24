@@ -1,13 +1,13 @@
-- include: makepkg.yml
-- include: aur.yml
+- import_tasks: makepkg.yml
+- import_tasks: aur.yml
   vars:
     name: trizen
     dependencies: [ git, pacutils, perl-libwww, perl-term-ui, perl-json, perl-data-dump, perl-lwp-protocol-https, perl-term-readline-gnu ]
-- include: audio.yml
-- include: video.yml
-- include: window_manager.yml
-- include: file_manager.yml
-- include: terminal.yml
-- include: util.yml
-- include: earlyoom.yml
-- include: firewall.yml
+- import_tasks: audio.yml
+- import_tasks: video.yml
+- import_tasks: window_manager.yml
+- import_tasks: file_manager.yml
+- import_tasks: terminal.yml
+- import_tasks: util.yml
+- import_tasks: earlyoom.yml
+- import_tasks: firewall.yml

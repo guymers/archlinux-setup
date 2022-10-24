@@ -1,7 +1,7 @@
-- include: sudo.yml
-- include: user.yml
-- include: secure_boot.yml
-- include: hooks.yml
-- include: time.yml
-- include: dns.yml
-- include: network.yml
+- import_tasks: sudo.yml
+- import_tasks: user.yml
+- import_tasks: secure_boot.yml
+- import_tasks: hooks.yml
+- import_tasks: time.yml
+- import_tasks: dns.yml
+- import_tasks: network.yml

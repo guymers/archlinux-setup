@@ -17,8 +17,8 @@ source "qemu" "arch-setup" {
   vm_name = "test-arch-setup.qcow2"
   format = "qcow2"
   output_directory = "target/test-arch-setup/"
-  iso_url = "http://mirror.rackspace.com/archlinux/iso/2022.04.05/archlinux-2022.04.05-x86_64.iso"
-  iso_checksum = "sha256:5934a1561f33a49574ba8bf6dbbdbd18c933470de4e2f7562bec06d24f73839b"
+  iso_url = "http://mirror.rackspace.com/archlinux/iso/2022.10.01/archlinux-2022.10.01-x86_64.iso"
+  iso_checksum = "sha256:17fe2053a114f2002efed53b39f740dd9778f5b689c9467a310b2649a80a6bfd"
   headless = var.headless
   cpus = var.cpus
   memory = var.memory

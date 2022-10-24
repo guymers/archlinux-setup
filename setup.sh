@@ -2,7 +2,7 @@
 set -e
 set -o pipefail
 
-# Last tested with archlinux-2022.04.05-x86_64.iso
+# Last tested with archlinux-2022.10.01-x86_64.iso
 #
 # Make sure you are okay with $drive being reformatted
 readonly drive="${ARCH_SETUP_DRIVE:-/dev/sd<X>}"
@@ -45,7 +45,11 @@ if [ -n "$swap" ]; then
 fi
 
 if [ "$encrypt" = true ] ; then
-  cryptsetup -v --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 5000 --use-random --verify-passphrase luksFormat "$root"
+  cryptsetup -v \
+    --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 5000 --use-random \
+    --allow-discards \
+    --perf-no_read_workqueue --perf-no_write_workqueue \
+    --verify-passphrase luksFormat "$root"
   cryptsetup open "$root" cryptroot
 
   install_drive=/dev/mapper/cryptroot
@@ -87,7 +91,7 @@ echo "kernel.sysrq=1" >> /mnt/etc/sysctl.d/reisub.conf
 echo "vm.oom_kill_allocating_task=1" > /mnt/etc/sysctl.d/vm.conf
 echo "vm.swappiness=5" >> /mnt/etc/sysctl.d/vm.conf
 
-echo "MAKEFLAGS='-j4'" >> /mnt/etc/makepkg.conf
+echo "MAKEFLAGS='-j8'" >> /mnt/etc/makepkg.conf
 echo "PKGEXT='.pkg.tar'" >> /mnt/etc/makepkg.conf
 echo "SRCEXT='.src.tar'" >> /mnt/etc/makepkg.conf
 

@@ -2,7 +2,7 @@
   pacman: name=sudo state=present
 
 - name: enable wheel group sudo
-  copy: src=wheel dest=/etc/sudoers.d/
+  copy: src=sudoers.d/wheel dest=/etc/sudoers.d/
 
 - name: disable sudo lecture
-  copy: src=lecture dest=/etc/sudoers.d/
+  copy: src=sudoers.d/lecture dest=/etc/sudoers.d/

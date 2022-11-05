@@ -1,4 +1,5 @@
 [Match]
+Name=wlo*
 Name=wlp*
 Name=wlan*
 

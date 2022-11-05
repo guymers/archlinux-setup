@@ -9,8 +9,8 @@ readonly drive="${ARCH_SETUP_DRIVE:-/dev/sd<X>}"
 readonly encrypt=false
 readonly swap="" # set to a value if you want swap
 readonly hostname="arch"
-readonly lang="en_AU.UTF-8"
-readonly timezone="Australia/Queensland"
+readonly lang="en_US.UTF-8"
+readonly timezone="UTC"
 readonly btrfs_options=noatime,compress-force=zstd:1
 
 readonly dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -33,7 +33,7 @@ if [ -n "$swap" ]; then
   sgdisk -n "2:0:+$swap" -c 2:swap -t 2:8200 "$drive"
   ((root_index++))
 fi
-sgdisk -n $root_index:0:0 -c $root_index:root -t $root_index:8300 "$drive"
+sgdisk -n $root_index:0:0 -c $root_index:root -t $root_index:8304 "$drive"
 
 readonly boot="${drive}${partition_prefix}1"
 readonly root="${drive}${partition_prefix}${root_index}"
@@ -47,7 +47,6 @@ fi
 if [ "$encrypt" = true ] ; then
   cryptsetup -v \
     --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 5000 --use-random \
-    --allow-discards \
     --perf-no_read_workqueue --perf-no_write_workqueue \
     --verify-passphrase luksFormat "$root"
   cryptsetup open "$root" cryptroot
@@ -85,11 +84,6 @@ arch-chroot /mnt locale-gen
 echo "LANG=$lang" > /mnt/etc/locale.conf
 
 echo "blacklist pcspkr" > /mnt/etc/modprobe.d/nobeep.conf
-
-echo "kernel.sysrq=1" >> /mnt/etc/sysctl.d/reisub.conf
-
-echo "vm.oom_kill_allocating_task=1" > /mnt/etc/sysctl.d/vm.conf
-echo "vm.swappiness=5" >> /mnt/etc/sysctl.d/vm.conf
 
 echo "MAKEFLAGS='-j8'" >> /mnt/etc/makepkg.conf
 echo "PKGEXT='.pkg.tar'" >> /mnt/etc/makepkg.conf
@@ -141,10 +135,7 @@ rm -r /mnt/archlinux-setup
 rm /mnt/etc/resolv.conf
 arch-chroot /mnt ln -s /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 
-pacman -Sy --noconfirm rsync
-mkdir /mnt/home/user/.archlinux-setup
-# copy setup folder excluding hidden files
-rsync -av "$dir/ansible/" /mnt/home/user/.archlinux-setup/
+cp -a "$dir/ansible" /mnt/home/user/.archlinux-setup
 arch-chroot /mnt chown -R user:user /home/user/.archlinux-setup
 
 arch-chroot /mnt bash -c "echo yes" | pacman -Scc

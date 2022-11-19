@@ -40,6 +40,10 @@ source "qemu" "arch-ansible" {
 build {
   sources = ["source.qemu.arch-ansible"]
 
+  provisioner "shell" {
+    inline = ["echo 'user' | sudo -S pacman -S ansible --noconfirm"]
+  }
+
   provisioner "ansible-local" {
     extra_arguments = [
       "--limit", "local",

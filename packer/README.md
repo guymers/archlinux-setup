@@ -6,6 +6,6 @@ To run headless use the command flag `-var 'headless=true'`
 
 During development run:
 
-    (cd .. && tar cf packer/http/setup.tar ansible/ setup.sh)
+    (cd .. && tar cf packer/http/setup.tar ansible/ config/ setup.sh)
     packer build -force test-arch-setup.pkr.hcl
     packer build -force test-arch-ansible.pkr.hcl

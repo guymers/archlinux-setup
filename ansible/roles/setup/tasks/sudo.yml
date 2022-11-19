@@ -1,8 +1,0 @@
-- name: install sudo
-  pacman: name=sudo state=present
-
-- name: enable wheel group sudo
-  copy: src=sudoers.d/wheel dest=/etc/sudoers.d/
-
-- name: disable sudo lecture
-  copy: src=sudoers.d/lecture dest=/etc/sudoers.d/

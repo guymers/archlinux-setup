@@ -1,7 +1,0 @@
-- name: add user
-  user:
-    name: user
-    password: "{{ password | password_hash('sha512', 'somesalt') }}"
-    shell: /bin/bash
-    groups: wheel,uucp,log,video,audio,optical,storage,power
-    append: yes

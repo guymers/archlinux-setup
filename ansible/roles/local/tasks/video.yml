@@ -6,7 +6,6 @@
       - xorg-xinit
       - xorg-xrandr
       - xorg-xrdb
-      - xscreensaver
       - mpv
     state: present
   become: yes

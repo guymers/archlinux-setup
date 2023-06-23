@@ -2,7 +2,7 @@
 set -e
 set -o pipefail
 
-# Last tested with archlinux-2022.11.01-x86_64.iso
+# Last tested with archlinux-2023.06.01-x86_64.iso
 #
 # Make sure you are okay with $drive being reformatted
 readonly drive="${ARCH_SETUP_DRIVE:-/dev/sd<X>}"
@@ -176,9 +176,9 @@ arch-chroot /mnt ln -s /usr/lib/systemd/system/btrfs-scrub@.timer "/etc/systemd/
 
 # https://wiki.archlinux.org/index.php/Secure_Boot#PreLoader
 arch-chroot /mnt curl -s -o /boot/EFI/systemd/PreLoader.efi https://blog.hansenpartnership.com/wp-uploads/2013/PreLoader.efi
-arch-chroot /mnt echo c73583439ad989f5eb3a68753df56a06dc2f04b637415e3c515c74654651e0991a1d5f0ab84da4cd1d681d29a35271ff584a5b988b28ce1b810f94c0d0a57aff /boot/EFI/systemd/PreLoader.efi | sha512sum -
-arch-chroot /mnt curl -s -o /boot/EFI/systemd/HashTool.efi https://blog.hansenpartnership.com/wp-uploads/2013/PreLoader.efi
-arch-chroot /mnt echo a51ce176c93417e53ec6d78c16afa5e8b9545e623d98d4fc55fc3762f33cd942ea1dce1211b2ed80703df08fe4fed84aff1fa86063c27b08413b3882019c4afd /boot/EFI/systemd/HashTool.efi | sha512sum -
+echo 'c73583439ad989f5eb3a68753df56a06dc2f04b637415e3c515c74654651e0991a1d5f0ab84da4cd1d681d29a35271ff584a5b988b28ce1b810f94c0d0a57aff  /mnt/boot/EFI/systemd/PreLoader.efi' | sha512sum --check -
+arch-chroot /mnt curl -s -o /boot/EFI/systemd/HashTool.efi https://blog.hansenpartnership.com/wp-uploads/2013/HashTool.efi
+echo 'a51ce176c93417e53ec6d78c16afa5e8b9545e623d98d4fc55fc3762f33cd942ea1dce1211b2ed80703df08fe4fed84aff1fa86063c27b08413b3882019c4afd  /mnt/boot/EFI/systemd/HashTool.efi' | sha512sum --check -
 arch-chroot /mnt cp /boot/EFI/systemd/systemd-bootx64.efi /boot/EFI/systemd/loader.efi
 
 if bootctl status | grep 'Secure Boot' | cut -d ":" -f 2 | grep "enabled" ; then

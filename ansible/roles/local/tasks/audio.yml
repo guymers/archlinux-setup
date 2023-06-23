@@ -2,6 +2,8 @@
   pacman:
     name:
       - pipewire
+      - pipewire-alsa
+      - pipewire-jack
       - pipewire-pulse
       - pavucontrol
     state: present

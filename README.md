@@ -31,9 +31,8 @@ Remove setup folder
 ### Notes
 - Change root password or disable login
 - Make sure cow is turned off for VirtualBox folders
-- Load microcode https://wiki.archlinux.org/index.php/Microcode#systemd-boot
-- Remove excess options from /etc/fstab
-- Install any non-Intel graphics drivers, check https://wiki.archlinux.org/index.php/Hardware_video_acceleration
+- Install any graphics drivers, check https://wiki.archlinux.org/index.php/Hardware_video_acceleration
+- `cryptsetup  --allow-discards --persistent refresh root` to allow TRIM
 
 
 ### Development

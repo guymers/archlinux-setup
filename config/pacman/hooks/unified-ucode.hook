@@ -1,0 +1,14 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Type = Package
+Target = amd-ucode
+Target = intel-ucode
+
+[Action]
+Depends = mkinitcpio
+Description = Updating linux initcpios after ucode module change...
+When = PostTransaction
+Exec = /usr/share/libalpm/scripts/mkinitcpio install
+NeedsTargets

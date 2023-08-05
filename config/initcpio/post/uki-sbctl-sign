@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+readonly kernel="$1"
+readonly uki="$3"
+[[ -n "$uki" ]] || exit 0
+
+[[ -x "/usr/bin/sbctl" ]] || exit 0
+/usr/bin/sbctl sign "$uki"

@@ -13,6 +13,7 @@ readonly lang="en_US.UTF-8"
 readonly timezone="UTC"
 readonly btrfs_options=noatime,compress-force=zstd:1
 readonly home_btrfs_options=nodev,nosuid,$btrfs_options
+readonly esp="/efi"
 
 readonly dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
@@ -71,18 +72,20 @@ fi
 mkfs.btrfs -f -L arch "$install_drive"
 mount "$install_drive" /mnt
 cd /mnt
-btrfs subvolume create __active
-btrfs subvolume create __active/root
-btrfs subvolume create __active/home
-btrfs subvolume create __snapshots
+btrfs subvolume create _
+btrfs subvolume create _/@
+btrfs subvolume create _/@var
+btrfs subvolume create _/@home
 
 cd /
 umount /mnt
-mount -o $btrfs_options,subvol=__active/root "$install_drive" /mnt
+mount -o $btrfs_options,subvol=_/@ "$install_drive" /mnt
+mkdir /mnt/var
+mount -o $btrfs_options,subvol=_/@var "$install_drive" /mnt/var
 mkdir /mnt/home
-mount -o $home_btrfs_options,subvol=__active/home "$install_drive" /mnt/home
-mkdir /mnt/efi
-mount -o nodev,nosuid,noexec "$boot" /mnt/efi
+mount -o $home_btrfs_options,subvol=_/@home "$install_drive" /mnt/home
+mkdir "/mnt/$esp"
+mount -o nodev,nosuid,noexec "$boot" "/mnt/$esp"
 
 readonly cpu_vendor=$(lscpu | grep 'Vendor ID')
 ucode=""
@@ -112,13 +115,12 @@ root  UUID=$root_uuid  -  password-echo=no,x-systemd.device-timeout=0,timeout=0
 EOF
 
   initrd_root="/dev/mapper/root"
-  home_mount_path="/dev/mapper/root"
+  mount_path="/dev/mapper/root"
 else
   initrd_root="UUID=$root_uuid"
-  home_mount_path="/dev/disk/by-uuid/$root_uuid"
+  mount_path="/dev/disk/by-uuid/$root_uuid"
 fi
 
-readonly esp="/efi"
 arch-chroot /mnt bootctl --path="$esp" install
 
 cat << EOF > "/mnt/$esp/loader/loader.conf"
@@ -128,10 +130,10 @@ editor   no
 console-mode max
 EOF
 cat << EOF > "/mnt/etc/kernel/cmdline"
-root=$initrd_root rootflags=$btrfs_options,subvol=__active/root cgroup_enable=memory swapaccount=1
+root=$initrd_root rootflags=$btrfs_options,subvol=_/@ rw rd.shell=0 cgroup_enable=memory
 EOF
 cat << EOF > "/mnt/etc/kernel/cmdline_fallback"
-root=$initrd_root rootflags=subvol=__active/root
+root=$initrd_root rootflags=subvol=_/@ rd.shell=0
 EOF
 
 if [ "$encrypt" = true ] ; then
@@ -155,16 +157,28 @@ echo "KEYMAP=us" > /mnt/etc/vconsole.conf
 arch-chroot /mnt mkinitcpio -p linux
 
 # mount files generated from fstab live in /run/systemd/generator/
+cat << EOF > "/mnt/etc/systemd/system/var.mount"
+[Unit]
+Before=local-fs.target
+After=-.mount
+
+[Mount]
+What=$mount_path
+Where=/var
+Type=btrfs
+Options=rw,$btrfs_options,subvol=_/@var
+EOF
+
 cat << EOF > "/mnt/etc/systemd/system/home.mount"
 [Unit]
 Before=local-fs.target
 After=-.mount
 
 [Mount]
-What=$home_mount_path
+What=$mount_path
 Where=/home
 Type=btrfs
-Options=$home_btrfs_options,subvol=/__active/home
+Options=rw,$home_btrfs_options,subvol=_/@home
 EOF
 
 find "$dir/config/" -type f -print0 | xargs -0 chmod 644

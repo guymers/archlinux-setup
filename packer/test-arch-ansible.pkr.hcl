@@ -24,7 +24,8 @@ source "qemu" "arch-ansible" {
   headless = var.headless
   cpus = var.cpus
   memory = var.memory
-  disk_size = 10240
+  disk_size = "10G"
+  disk_additional_size = [ "10G" ]
   qemuargs = [
     ["-bios", "/usr/share/edk2-ovmf/x64/OVMF_CODE.fd"]
   ]

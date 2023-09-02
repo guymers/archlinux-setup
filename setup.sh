@@ -2,12 +2,12 @@
 set -e
 set -o pipefail
 
-# Last tested with archlinux-2023.08.01-x86_64.iso
+# Last tested with archlinux-2023.09.01-x86_64.iso
 #
 # Make sure you are okay with $drive being reformatted
-readonly drive="${ARCH_SETUP_DRIVE:-/dev/sd<X>}"
-readonly encrypt=false
-readonly swap="" # set to a value if you want swap
+readonly drive_main="${ARCH_SETUP_DRIVE:-/dev/nvme<X>n1}"
+readonly drive_mirror="${ARCH_SETUP_DRIVE_MIRROR}"
+readonly swap_amount="" # set to a value if you want swap
 readonly hostname="arch"
 readonly lang="en_US.UTF-8"
 readonly timezone="UTC"
@@ -23,54 +23,63 @@ if ! [ -d "/sys/firmware/efi" ]; then
   exit 1
 fi
 
-root_index=2
-partition_prefix=""
-if echo "$drive" | grep -q -e "^/dev/nvme"; then
-  partition_prefix="p"
-fi
+extra_packages=()
 
-sgdisk --clear -g "$drive"
-sgdisk -n 1:0:+512M -c 1:boot -t 1:ef00 "$drive"
-if [ -n "$swap" ]; then
-  sgdisk -n "2:0:+$swap" -c 2:swap -t 2:8200 "$drive"
-  ((root_index++))
-fi
-sgdisk -n $root_index:0:0 -c $root_index:root -t $root_index:8304 "$drive"
+boot_drive=
+boot_drive_mirror=
+root_drives=()
+swap_labels=()
 
-readonly boot="${drive}${partition_prefix}1"
-readonly root="${drive}${partition_prefix}${root_index}"
+function partition() {
+  local drive="$1"
+  local index="$2"
 
-mkfs.fat -F32 "$boot"
-
-if [ -n "$swap" ]; then
-  mkswap "${drive}${partition_prefix}2"
-
-  if [ "$encrypt" = true ] ; then
-    readonly swap_disk_id=$(find -L /dev/disk -samefile "${drive}${partition_prefix}2" | grep '^/dev/disk/by-id/' | sort | head -n 1)
-    if [ -z "$swap_id" ]; then
-      echo "Could not find swap disk id for partition ${drive}${partition_prefix}2"
-      exit 1
-    fi
-
-    echo "swap  $swap_disk_id  /dev/urandom  swap,cipher=aes-xts-plain64,size=512" >> /etc/crypttab
-    echo "/dev/mapper/swap  none  swap  defaults  0  0" >> /etc/fstab
+  local root_index=2
+  local partition_prefix=""
+  if echo "$drive" | grep -q -e "^/dev/nvme"; then
+    partition_prefix="p"
   fi
-fi
 
-if [ "$encrypt" = true ] ; then
+  sgdisk --clear -g "$drive"
+  sgdisk -n 1:0:+512M -c 1:boot -t 1:ef00 "$drive"
+  if [ -n "$swap_amount" ]; then
+    sgdisk -n "2:0:+$swap_amount" -c 2:swap -t 2:8200 "$drive"
+    ((root_index++))
+  fi
+  sgdisk -n $root_index:0:0 -c $root_index:root -t $root_index:8304 "$drive"
+
+  boot_drive="${drive}${partition_prefix}1"
+  local root_drive="${drive}${partition_prefix}${root_index}"
+
+  if [ -n "$swap_amount" ]; then
+    local swap="${drive}${partition_prefix}2"
+    # https://wiki.archlinux.org/title/Dm-crypt/Swap_encryption#UUID_and_LABEL
+    mkfs.ext2 -L "cryptswap${index}" "${swap}" 1M
+    swap_labels+=("cryptswap${index}")
+  fi
+
   cryptsetup -v \
     --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 5000 --use-random \
     --perf-no_read_workqueue --perf-no_write_workqueue \
-    --verify-passphrase luksFormat "$root"
-  cryptsetup open "$root" root
+    --verify-passphrase luksFormat "$root_drive"
+  cryptsetup open "$root_drive" "root${index}"
 
-  install_drive=/dev/mapper/root
+  mkfs.fat -F32 "$boot_drive"
+  root_drives+=("$root_drive")
+}
+
+if [[ -n "$drive_mirror" ]]; then
+  partition "$drive_mirror" "2"
+  boot_drive_mirror="$boot_drive"
+  partition "$drive_main" "1"
+  mkfs.btrfs -m raid1 -d raid1 -f -L archroot /dev/mapper/root1 /dev/mapper/root2
 else
-  install_drive="$root"
+  partition "$drive_main" ""
+  mkfs.btrfs -f -L archroot /dev/mapper/root
 fi
 
-mkfs.btrfs -f -L arch "$install_drive"
-mount "$install_drive" /mnt
+readonly root_fs=/dev/disk/by-label/archroot
+mount "$root_fs" /mnt
 cd /mnt
 btrfs subvolume create _
 btrfs subvolume create _/@
@@ -79,24 +88,27 @@ btrfs subvolume create _/@home
 
 cd /
 umount /mnt
-mount -o $btrfs_options,subvol=_/@ "$install_drive" /mnt
+mount -o $btrfs_options,subvol=_/@ "$root_fs" /mnt
 mkdir /mnt/var
-mount -o $btrfs_options,subvol=_/@var "$install_drive" /mnt/var
+mount -o $btrfs_options,subvol=_/@var "$root_fs" /mnt/var
 mkdir /mnt/home
-mount -o $home_btrfs_options,subvol=_/@home "$install_drive" /mnt/home
+mount -o $home_btrfs_options,subvol=_/@home "$root_fs" /mnt/home
 mkdir "/mnt/$esp"
-mount -o nodev,nosuid,noexec "$boot" "/mnt/$esp"
+mount -o nodev,nosuid,noexec "$boot_drive" "/mnt/$esp"
 
 readonly cpu_vendor=$(lscpu | grep 'Vendor ID')
-ucode=""
 if [[ $cpu_vendor == *"AuthenticAMD"* ]]; then
-  ucode="amd-ucode"
+  extra_packages+=(amd-ucode)
 elif [[ $cpu_vendor == *"GenuineIntel"* ]]; then
-  ucode="intel-ucode"
+  extra_packages+=(intel-ucode)
+fi
+
+if [[ -n "$ARCH_SETUP_PACMAN_MIRROR" ]]; then
+  echo "Server = $ARCH_SETUP_PACMAN_MIRROR" > /etc/pacman.d/mirrorlist
 fi
 
 pacstrap /mnt base linux linux-firmware btrfs-progs cryptsetup efibootmgr \
-  pacman-contrib openssh sudo systemd-resolvconf vim wpa_supplicant $ucode
+  pacman-contrib openssh sudo systemd-resolvconf vim wpa_supplicant "${extra_packages[@]}"
 
 echo "$hostname" > /mnt/etc/hostname
 sed -i "/^127.0.0.1/ s/ localhost/ localhost $hostname/" /mnt/etc/hosts
@@ -107,21 +119,19 @@ echo "LANG=$lang" > /mnt/etc/locale.conf
 
 echo "blacklist pcspkr" > /mnt/etc/modprobe.d/nobeep.conf
 
-readonly root_uuid=$(arch-chroot /mnt blkid -s UUID -o value "$root")
-if [ "$encrypt" = true ] ; then
+for i in "${!root_drives[@]}"; do
+  root_uuid=$(arch-chroot /mnt blkid -s UUID -o value "${root_drives[$i]}")
+  n="root$((i + 1))"
+  if [[ "${#root_drives[@]}" -eq 1 ]]; then n="root"; fi
+  echo "$n  UUID=$root_uuid  -  password-echo=no,x-systemd.device-timeout=60,timeout=0" >> /mnt/etc/crypttab.initramfs
+done
 
-cat << EOF > "/mnt/etc/crypttab.initramfs"
-root  UUID=$root_uuid  -  password-echo=no,x-systemd.device-timeout=0,timeout=0
-EOF
+for i in "${!swap_labels[@]}"; do
+  echo "swap$i  LABEL=${swap_labels[$i]}  /dev/urandom  swap,cipher=aes-xts-plain64,size=512,offset=2048" >> /mnt/etc/crypttab
+  echo "/dev/mapper/swap$i  none  swap  defaults  0  0" >> /mnt/etc/fstab
+done
 
-  initrd_root="/dev/mapper/root"
-  mount_path="/dev/mapper/root"
-else
-  initrd_root="UUID=$root_uuid"
-  mount_path="/dev/disk/by-uuid/$root_uuid"
-fi
-
-arch-chroot /mnt bootctl --path="$esp" install
+arch-chroot /mnt bootctl --esp-path="$esp" install
 
 cat << EOF > "/mnt/$esp/loader/loader.conf"
 default  arch-linux.efi
@@ -130,17 +140,18 @@ editor   no
 console-mode max
 EOF
 cat << EOF > "/mnt/etc/kernel/cmdline"
-root=$initrd_root rootflags=$btrfs_options,subvol=_/@ rw rd.shell=0 cgroup_enable=memory
+root=$root_fs rootflags=$btrfs_options,subvol=_/@ rw rd.shell=0 cgroup_enable=memory
 EOF
 cat << EOF > "/mnt/etc/kernel/cmdline_fallback"
-root=$initrd_root rootflags=subvol=_/@ rd.shell=0
+root=$root_fs rootflags=subvol=_/@ rd.shell=0
 EOF
 
-if [ "$encrypt" = true ] ; then
-  sed -i "s/^HOOKS=.*/HOOKS=(base systemd autodetect modconf kms keyboard sd-vconsole block sd-encrypt filesystems fsck)/" /mnt/etc/mkinitcpio.conf
-else
-  sed -i "s/^HOOKS=.*/HOOKS=(base systemd autodetect modconf kms keyboard sd-vconsole block filesystems fsck)/" /mnt/etc/mkinitcpio.conf
+# sync esp to mirror
+if [[ -n "$boot_drive_mirror" ]]; then
+  dd if="$boot_drive" of="$boot_drive_mirror" bs=4096k
 fi
+
+sed -i "s/^HOOKS=.*/HOOKS=(base systemd autodetect modconf kms keyboard block sd-encrypt filesystems fsck)/" /mnt/etc/mkinitcpio.conf
 cat << EOF > "/mnt/etc/mkinitcpio.d/linux.preset"
 #ALL_config="/etc/mkinitcpio.conf"
 ALL_kver="/boot/vmlinuz-linux"
@@ -153,17 +164,15 @@ default_uki="$esp/EFI/Linux/arch-linux.efi"
 fallback_uki="$esp/EFI/Linux/arch-linux-fallback.efi"
 fallback_options="-S autodetect --cmdline /etc/kernel/cmdline_fallback"
 EOF
-echo "KEYMAP=us" > /mnt/etc/vconsole.conf
 arch-chroot /mnt mkinitcpio -p linux
 
-# mount files generated from fstab live in /run/systemd/generator/
 cat << EOF > "/mnt/etc/systemd/system/var.mount"
 [Unit]
 Before=local-fs.target
 After=-.mount
 
 [Mount]
-What=$mount_path
+What=$root_fs
 Where=/var
 Type=btrfs
 Options=rw,$btrfs_options,subvol=_/@var
@@ -175,7 +184,7 @@ Before=local-fs.target
 After=-.mount
 
 [Mount]
-What=$mount_path
+What=$root_fs
 Where=/home
 Type=btrfs
 Options=rw,$home_btrfs_options,subvol=_/@home
@@ -226,14 +235,15 @@ arch-chroot /mnt systemctl enable fstrim.timer
 # the above does not work during install so just create the system link manually
 arch-chroot /mnt ln -s /usr/lib/systemd/system/btrfs-scrub@.timer "/etc/systemd/system/timers.target.wants/btrfs-scrub@-.timer"
 
-# https://wiki.archlinux.org/index.php/Secure_Boot#PreLoader
-arch-chroot /mnt curl -s -o $esp/EFI/systemd/PreLoader.efi https://blog.hansenpartnership.com/wp-uploads/2013/PreLoader.efi
-echo "c73583439ad989f5eb3a68753df56a06dc2f04b637415e3c515c74654651e0991a1d5f0ab84da4cd1d681d29a35271ff584a5b988b28ce1b810f94c0d0a57aff  /mnt$esp/EFI/systemd/PreLoader.efi" | sha512sum --check -
-arch-chroot /mnt curl -s -o $esp/EFI/systemd/HashTool.efi https://blog.hansenpartnership.com/wp-uploads/2013/HashTool.efi
-echo "a51ce176c93417e53ec6d78c16afa5e8b9545e623d98d4fc55fc3762f33cd942ea1dce1211b2ed80703df08fe4fed84aff1fa86063c27b08413b3882019c4afd  /mnt$esp/EFI/systemd/HashTool.efi" | sha512sum --check -
-arch-chroot /mnt cp $esp/EFI/systemd/systemd-bootx64.efi $esp/EFI/systemd/loader.efi
-
+# if secure boot is already enabled probably dual booting so install the pre-loader
 if bootctl status | grep 'Secure Boot' | cut -d ":" -f 2 | grep "enabled" ; then
+  # https://wiki.archlinux.org/index.php/Secure_Boot#PreLoader
+  arch-chroot /mnt curl -s -o $esp/EFI/systemd/PreLoader.efi https://blog.hansenpartnership.com/wp-uploads/2013/PreLoader.efi
+  echo "c73583439ad989f5eb3a68753df56a06dc2f04b637415e3c515c74654651e0991a1d5f0ab84da4cd1d681d29a35271ff584a5b988b28ce1b810f94c0d0a57aff  /mnt$esp/EFI/systemd/PreLoader.efi" | sha512sum --check -
+  arch-chroot /mnt curl -s -o $esp/EFI/systemd/HashTool.efi https://blog.hansenpartnership.com/wp-uploads/2013/HashTool.efi
+  echo "a51ce176c93417e53ec6d78c16afa5e8b9545e623d98d4fc55fc3762f33cd942ea1dce1211b2ed80703df08fe4fed84aff1fa86063c27b08413b3882019c4afd  /mnt$esp/EFI/systemd/HashTool.efi" | sha512sum --check -
+  arch-chroot /mnt cp $esp/EFI/systemd/systemd-bootx64.efi $esp/EFI/systemd/loader.efi
+
   # https://wiki.archlinux.org/index.php/Unified_Extensible_Firmware_Interface/Secure_Boot#Set_up_PreLoader
   efibootmgr --verbose --disk "$drive" --part 1 --create --label 'PreLoader' --loader /EFI/systemd/PreLoader.efi
 fi

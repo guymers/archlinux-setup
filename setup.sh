@@ -8,12 +8,12 @@ set -o pipefail
 readonly drive_main="${ARCH_SETUP_DRIVE:-/dev/nvme<X>n1}"
 readonly drive_mirror="${ARCH_SETUP_DRIVE_MIRROR}"
 readonly swap_amount="" # set to a value if you want swap
-readonly hostname="arch"
+readonly hostname="arch-temp"
 readonly lang="en_US.UTF-8"
 readonly timezone="UTC"
 readonly btrfs_options=noatime,compress-force=zstd:1
 readonly home_btrfs_options=nodev,nosuid,$btrfs_options
-readonly esp="/efi"
+readonly kernel="linux" # linux-hardened, linux-zen
 
 readonly dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
@@ -22,6 +22,8 @@ if ! [ -d "/sys/firmware/efi" ]; then
   echo "Installation only supports EFI"
   exit 1
 fi
+
+readonly esp="/efi"
 
 extra_packages=()
 
@@ -95,6 +97,7 @@ mkdir /mnt/home
 mount -o $home_btrfs_options,subvol=_/@home "$root_fs" /mnt/home
 mkdir "/mnt/$esp"
 mount -o nodev,nosuid,noexec "$boot_drive" "/mnt/$esp"
+mkdir -p "/mnt/$esp/EFI/Linux"
 
 readonly cpu_vendor=$(lscpu | grep 'Vendor ID')
 if [[ $cpu_vendor == *"AuthenticAMD"* ]]; then
@@ -107,11 +110,10 @@ if [[ -n "$ARCH_SETUP_PACMAN_MIRROR" ]]; then
   echo "Server = $ARCH_SETUP_PACMAN_MIRROR" > /etc/pacman.d/mirrorlist
 fi
 
-pacstrap /mnt base linux linux-firmware btrfs-progs cryptsetup efibootmgr \
+pacstrap /mnt base "$kernel" linux-firmware btrfs-progs cryptsetup efibootmgr \
   pacman-contrib openssh sudo systemd-resolvconf vim wpa_supplicant "${extra_packages[@]}"
 
 echo "$hostname" > /mnt/etc/hostname
-sed -i "/^127.0.0.1/ s/ localhost/ localhost $hostname/" /mnt/etc/hosts
 arch-chroot /mnt ln -sf "/usr/share/zoneinfo/$timezone" /etc/localtime
 sed -i "/$lang/ s/# *//" /mnt/etc/locale.gen
 arch-chroot /mnt locale-gen
@@ -131,14 +133,6 @@ for i in "${!swap_labels[@]}"; do
   echo "/dev/mapper/swap$i  none  swap  defaults  0  0" >> /mnt/etc/fstab
 done
 
-arch-chroot /mnt bootctl --esp-path="$esp" install
-
-cat << EOF > "/mnt/$esp/loader/loader.conf"
-default  arch-linux.efi
-timeout  3
-editor   no
-console-mode max
-EOF
 cat << EOF > "/mnt/etc/kernel/cmdline"
 root=$root_fs rootflags=$btrfs_options,subvol=_/@ rw rd.shell=0 cgroup_enable=memory
 EOF
@@ -146,25 +140,19 @@ cat << EOF > "/mnt/etc/kernel/cmdline_fallback"
 root=$root_fs rootflags=subvol=_/@ rd.shell=0
 EOF
 
-# sync esp to mirror
-if [[ -n "$boot_drive_mirror" ]]; then
-  dd if="$boot_drive" of="$boot_drive_mirror" bs=4096k
-fi
-
 sed -i "s/^HOOKS=.*/HOOKS=(base systemd autodetect modconf kms keyboard block sd-encrypt filesystems fsck)/" /mnt/etc/mkinitcpio.conf
-cat << EOF > "/mnt/etc/mkinitcpio.d/linux.preset"
-#ALL_config="/etc/mkinitcpio.conf"
-ALL_kver="/boot/vmlinuz-linux"
+cat << EOF > "/mnt/etc/mkinitcpio.d/$kernel.preset"
+ALL_kver="/boot/vmlinuz-$kernel"
 ALL_microcode=(/boot/*-ucode.img)
 
 PRESETS=('default' 'fallback')
 
-default_uki="$esp/EFI/Linux/arch-linux.efi"
+default_uki="$esp/EFI/Linux/arch-$kernel.efi"
 
-fallback_uki="$esp/EFI/Linux/arch-linux-fallback.efi"
+fallback_uki="$esp/EFI/Linux/arch-$kernel-fallback.efi"
 fallback_options="-S autodetect --cmdline /etc/kernel/cmdline_fallback"
 EOF
-arch-chroot /mnt mkinitcpio -p linux
+arch-chroot /mnt mkinitcpio -p "$kernel"
 
 cat << EOF > "/mnt/etc/systemd/system/var.mount"
 [Unit]
@@ -225,6 +213,10 @@ arch-chroot /mnt systemctl enable systemd-resolved.service
 rm /mnt/etc/resolv.conf # avoid device or resource busy when running from inside chroot
 arch-chroot /mnt ln -s /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 
+# core dumps
+arch-chroot /mnt mkdir -p /etc/systemd/coredump.conf.d/
+cp "$dir/config/coredump.conf.d/"* /mnt/etc/systemd/coredump.conf.d/
+
 # sysctl
 arch-chroot /mnt mkdir -p /etc/sysctl.d/
 cp "$dir/config/sysctl.d/"* /mnt/etc/sysctl.d/
@@ -235,17 +227,34 @@ arch-chroot /mnt systemctl enable fstrim.timer
 # the above does not work during install so just create the system link manually
 arch-chroot /mnt ln -s /usr/lib/systemd/system/btrfs-scrub@.timer "/etc/systemd/system/timers.target.wants/btrfs-scrub@-.timer"
 
+efibootmgr -t 3
+
+# sync esp to mirror
+if [[ -n "$boot_drive_mirror" ]]; then
+  dd if="$boot_drive" of="$boot_drive_mirror" bs=4096k
+  efibootmgr --create --disk "$drive_mirror" --part 1 --label "Arch Linux [mirror] (fallback)" \
+    --loader "EFI\Linux\arch-$kernel-fallback.efi"
+  efibootmgr --create --disk "$drive_mirror" --part 1 --label "Arch Linux [mirror]" \
+    --loader "EFI\Linux\arch-$kernel.efi"
+fi
+
+efibootmgr --create --disk "$drive_main" --part 1 --label "Arch Linux (fallback)" \
+  --loader "EFI\Linux\arch-$kernel-fallback.efi"
+efibootmgr --create --disk "$drive_main" --part 1 --label "Arch Linux" \
+  --loader "EFI\Linux\arch-$kernel.efi"
+
 # if secure boot is already enabled probably dual booting so install the pre-loader
 if bootctl status | grep 'Secure Boot' | cut -d ":" -f 2 | grep "enabled" ; then
+  arch-chroot /mnt mkdir -p "$esp/EFI/systemd"
+
   # https://wiki.archlinux.org/index.php/Secure_Boot#PreLoader
-  arch-chroot /mnt curl -s -o $esp/EFI/systemd/PreLoader.efi https://blog.hansenpartnership.com/wp-uploads/2013/PreLoader.efi
+  arch-chroot /mnt curl -s -o "$esp/EFI/systemd/PreLoader.efi" https://blog.hansenpartnership.com/wp-uploads/2013/PreLoader.efi
   echo "c73583439ad989f5eb3a68753df56a06dc2f04b637415e3c515c74654651e0991a1d5f0ab84da4cd1d681d29a35271ff584a5b988b28ce1b810f94c0d0a57aff  /mnt$esp/EFI/systemd/PreLoader.efi" | sha512sum --check -
-  arch-chroot /mnt curl -s -o $esp/EFI/systemd/HashTool.efi https://blog.hansenpartnership.com/wp-uploads/2013/HashTool.efi
+  arch-chroot /mnt curl -s -o "$esp/EFI/systemd/HashTool.efi" https://blog.hansenpartnership.com/wp-uploads/2013/HashTool.efi
   echo "a51ce176c93417e53ec6d78c16afa5e8b9545e623d98d4fc55fc3762f33cd942ea1dce1211b2ed80703df08fe4fed84aff1fa86063c27b08413b3882019c4afd  /mnt$esp/EFI/systemd/HashTool.efi" | sha512sum --check -
-  arch-chroot /mnt cp $esp/EFI/systemd/systemd-bootx64.efi $esp/EFI/systemd/loader.efi
 
   # https://wiki.archlinux.org/index.php/Unified_Extensible_Firmware_Interface/Secure_Boot#Set_up_PreLoader
-  efibootmgr --verbose --disk "$drive" --part 1 --create --label 'PreLoader' --loader /EFI/systemd/PreLoader.efi
+  efibootmgr --create --disk "$drive_main" --part 1 --label 'PreLoader' --loader /EFI/systemd/PreLoader.efi
 fi
 
 # user

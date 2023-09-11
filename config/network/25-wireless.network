@@ -6,6 +6,7 @@ Name=wlan*
 [Network]
 DHCP=yes
 IPv6PrivacyExtensions=yes
+LLMNR=no
 
 [DHCP]
 RouteMetric=1024

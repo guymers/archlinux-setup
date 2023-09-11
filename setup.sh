@@ -106,12 +106,16 @@ elif [[ $cpu_vendor == *"GenuineIntel"* ]]; then
   extra_packages+=(intel-ucode)
 fi
 
+if printf '%s\n' /sys/class/net/*/wireless; then
+  extra_packages+=(wpa_supplicant)
+fi
+
 if [[ -n "$ARCH_SETUP_PACMAN_MIRROR" ]]; then
   echo "Server = $ARCH_SETUP_PACMAN_MIRROR" > /etc/pacman.d/mirrorlist
 fi
 
 pacstrap /mnt base "$kernel" linux-firmware btrfs-progs cryptsetup efibootmgr \
-  pacman-contrib openssh sudo systemd-resolvconf vim wpa_supplicant "${extra_packages[@]}"
+  pacman-contrib openssh sudo vim "${extra_packages[@]}"
 
 echo "$hostname" > /mnt/etc/hostname
 arch-chroot /mnt ln -sf "/usr/share/zoneinfo/$timezone" /etc/localtime
@@ -133,11 +137,15 @@ for i in "${!swap_labels[@]}"; do
   echo "/dev/mapper/swap$i  none  swap  defaults  0  0" >> /mnt/etc/fstab
 done
 
+readonly cmdline_options="rw rd.shell=0 rd.emergency=reboot"
 cat << EOF > "/mnt/etc/kernel/cmdline"
-root=$root_fs rootflags=$btrfs_options,subvol=_/@ rw rd.shell=0 cgroup_enable=memory
+root=$root_fs rootflags=$btrfs_options,subvol=_/@ $cmdline_options cgroup_enable=memory
+EOF
+cat << EOF > "/mnt/etc/kernel/cmdline_degraded"
+root=$root_fs rootflags=$btrfs_options,degraded,subvol=_/@ $cmdline_options cgroup_enable=memory
 EOF
 cat << EOF > "/mnt/etc/kernel/cmdline_fallback"
-root=$root_fs rootflags=subvol=_/@ rd.shell=0
+root=$root_fs rootflags=subvol=_/@ $cmdline_options
 EOF
 
 sed -i "s/^HOOKS=.*/HOOKS=(base systemd autodetect modconf kms keyboard block sd-encrypt filesystems fsck)/" /mnt/etc/mkinitcpio.conf
@@ -150,8 +158,16 @@ PRESETS=('default' 'fallback')
 default_uki="$esp/EFI/Linux/arch-$kernel.efi"
 
 fallback_uki="$esp/EFI/Linux/arch-$kernel-fallback.efi"
-fallback_options="-S autodetect --cmdline /etc/kernel/cmdline_fallback"
+fallback_options="--skiphooks autodetect --cmdline /etc/kernel/cmdline_fallback"
 EOF
+if [[ -n "$boot_drive_mirror" ]]; then
+  sed -i "s/^PRESETS=.*/PRESETS=('default' 'degraded' 'fallback')/" "/mnt/etc/mkinitcpio.d/$kernel.preset"
+cat << EOF >> "/mnt/etc/mkinitcpio.d/$kernel.preset"
+
+degraded_uki="$esp/EFI/Linux/arch-$kernel-degraded.efi"
+degraded_options="--cmdline /etc/kernel/cmdline_degraded"
+EOF
+fi
 arch-chroot /mnt mkinitcpio -p "$kernel"
 
 cat << EOF > "/mnt/etc/systemd/system/var.mount"
@@ -203,7 +219,8 @@ arch-chroot /mnt systemctl disable systemd-networkd-wait-online.service
 arch-chroot /mnt systemctl mask systemd-networkd-wait-online.service
 
 # time
-cp "$dir/config/timesyncd.conf" /mnt/etc/systemd/
+arch-chroot /mnt mkdir -p /etc/systemd/timesyncd.conf.d/
+cp "$dir/config/timesyncd.conf.d/"* /mnt/etc/systemd/timesyncd.conf.d/
 arch-chroot /mnt systemctl enable systemd-timesyncd.service
 
 # dns
@@ -229,19 +246,25 @@ arch-chroot /mnt ln -s /usr/lib/systemd/system/btrfs-scrub@.timer "/etc/systemd/
 
 efibootmgr -t 3
 
-# sync esp to mirror
-if [[ -n "$boot_drive_mirror" ]]; then
-  dd if="$boot_drive" of="$boot_drive_mirror" bs=4096k
-  efibootmgr --create --disk "$drive_mirror" --part 1 --label "Arch Linux [mirror] (fallback)" \
-    --loader "EFI\Linux\arch-$kernel-fallback.efi"
-  efibootmgr --create --disk "$drive_mirror" --part 1 --label "Arch Linux [mirror]" \
-    --loader "EFI\Linux\arch-$kernel.efi"
-fi
+function add_boot_entries() {
+  local drive="$1"
+  local suffix="$2"
 
-efibootmgr --create --disk "$drive_main" --part 1 --label "Arch Linux (fallback)" \
-  --loader "EFI\Linux\arch-$kernel-fallback.efi"
-efibootmgr --create --disk "$drive_main" --part 1 --label "Arch Linux" \
-  --loader "EFI\Linux\arch-$kernel.efi"
+  efibootmgr --create --disk "$drive" --part 1 --label "Arch Linux$suffix (fallback)" \
+    --loader "EFI\Linux\arch-$kernel-fallback.efi"
+  if [[ -n "$drive_mirror" ]]; then
+    efibootmgr --create --disk "$drive" --part 1 --label "Arch Linux$suffix (degraded)" \
+      --loader "EFI\Linux\arch-$kernel-degraded.efi"
+  fi
+  efibootmgr --create --disk "$drive" --part 1 --label "Arch Linux$suffix" \
+    --loader "EFI\Linux\arch-$kernel.efi"
+}
+
+if [[ -n "$boot_drive_mirror" ]]; then
+  dd if="$boot_drive" of="$boot_drive_mirror" bs=4096k # sync esp to mirror
+  add_boot_entries "$drive_mirror" " [mirror]"
+fi
+add_boot_entries "$drive_main" ""
 
 # if secure boot is already enabled probably dual booting so install the pre-loader
 if bootctl status | grep 'Secure Boot' | cut -d ":" -f 2 | grep "enabled" ; then

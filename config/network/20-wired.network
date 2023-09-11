@@ -5,6 +5,8 @@ Name=eth*
 [Network]
 DHCP=yes
 IPv6PrivacyExtensions=yes
+LLMNR=no
+MulticastDNS=resolve
 
 [DHCP]
 RouteMetric=512

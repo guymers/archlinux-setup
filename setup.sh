@@ -106,7 +106,7 @@ elif [[ $cpu_vendor == *"GenuineIntel"* ]]; then
   extra_packages+=(intel-ucode)
 fi
 
-if printf '%s\n' /sys/class/net/*/wireless; then
+if printf '%s\n' /sys/class/net/*/wireless | grep -v '/sys/class/net/\*/wireless'; then
   extra_packages+=(wpa_supplicant)
 fi
 
@@ -193,6 +193,46 @@ Where=/home
 Type=btrfs
 Options=rw,$home_btrfs_options,subvol=_/@home
 EOF
+
+# systemd-gpt-auto-generator does not generate esp automounts if using raid1
+if [[ -n "$boot_drive_mirror" ]]; then
+  boot1_uuid=$(arch-chroot /mnt blkid -s PARTUUID -o value "$boot_drive")
+  boot1_escaped=$(arch-chroot /mnt systemd-escape "dev/disk/by-partuuid/$boot1_uuid")
+  boot2_uuid=$(arch-chroot /mnt blkid -s PARTUUID -o value "$boot_drive_mirror")
+  boot2_escaped=$(arch-chroot /mnt systemd-escape "dev/disk/by-partuuid/$boot2_uuid")
+
+cat << EOF > "/mnt/etc/systemd/system/efi.mount"
+[Unit]
+Description=EFI System Partition Automount
+# main
+After=blockdev@${boot1_escaped}.target
+# mirror
+#After=blockdev@${boot2_escaped}.target
+
+[Mount]
+# main
+What=/dev/disk/by-partuuid/${boot1_uuid}
+# mirror
+#What=/dev/disk/by-partuuid/${boot2_uuid}
+Where=$esp
+Type=vfat
+Options=umask=0077,rw,nodev,nosuid,noexec,nosymfollow
+EOF
+
+cat << EOF > "/mnt/etc/systemd/system/efi.automount"
+[Unit]
+Description=EFI System Partition Automount
+
+[Automount]
+Where=$esp
+TimeoutIdleSec=120
+
+[Install]
+WantedBy=local-fs.target
+EOF
+
+arch-chroot /mnt systemctl enable efi.automount
+fi
 
 find "$dir/config/" -type f -print0 | xargs -0 chmod 644
 find "$dir/config/initcpio/post/" -type f -print0 | xargs -0 chmod 755

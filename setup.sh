@@ -80,7 +80,11 @@ else
   mkfs.btrfs -f -L archroot /dev/mapper/root
 fi
 
-readonly root_fs=/dev/disk/by-label/archroot
+root_fs=/dev/disk/by-label/archroot
+# installing on an sdcard and the label didn't exist, so fallback to the mapper
+if [[ ! -f "$root_fs" && -z "$drive_mirror" ]]; then
+  root_fs=/dev/mapper/root
+fi
 mount "$root_fs" /mnt
 cd /mnt
 btrfs subvolume create _
@@ -145,7 +149,7 @@ cat << EOF > "/mnt/etc/kernel/cmdline_degraded"
 root=$root_fs rootflags=$btrfs_options,degraded,subvol=_/@ $cmdline_options cgroup_enable=memory
 EOF
 cat << EOF > "/mnt/etc/kernel/cmdline_fallback"
-root=$root_fs rootflags=subvol=_/@ $cmdline_options
+root=$root_fs rootflags=$btrfs_options,subvol=_/@ $cmdline_options
 EOF
 
 sed -i "s/^HOOKS=.*/HOOKS=(base systemd autodetect modconf kms keyboard block sd-encrypt filesystems fsck)/" /mnt/etc/mkinitcpio.conf
@@ -284,7 +288,7 @@ arch-chroot /mnt systemctl enable fstrim.timer
 # the above does not work during install so just create the system link manually
 arch-chroot /mnt ln -s /usr/lib/systemd/system/btrfs-scrub@.timer "/etc/systemd/system/timers.target.wants/btrfs-scrub@-.timer"
 
-efibootmgr -t 3
+efibootmgr -t 3 || echo "could not change boot timeout"
 
 function add_boot_entries() {
   local drive="$1"

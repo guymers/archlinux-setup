@@ -1,6 +1,4 @@
 
-`# pacman -S socat`
-
 Create a user:
 `> /etc/sysusers.d/unifi.conf`
 ```
@@ -14,10 +12,13 @@ Create data and log directories:
 ```
 d /var/lib/unifi 0750 unifi unifi
 d /var/log/unifi 0750 unifi unifi
+d /run/unifi 0750 unifi unifi
 ```
 `# systemd-tmpfiles --create`
 
 For syslog logging from devices:
+
+`# pacman -S socat`
 
 `> /etc/systemd/system/unifi-syslog.service`
 ```
@@ -41,19 +42,20 @@ Requires=unifi-syslog.service
 [Container]
 ContainerName=unifi
 HostName=unifi
-Image=docker.io/jacobalberty/unifi:v7.4.162
+Image=ghcr.io/guymers/unifi:v8.0.7
 Network=lanpods
 IP=10.10.1.240
 DNS=10.10.1.210
 # unifi:unifi
 User=970
 Group=970
-Environment=RUNAS_UID0=false
-Environment=UNIFI_STDOUT=true
 Volume=/var/lib/unifi:/unifi/data
 Volume=/var/log/unifi:/unifi/log
-HealthOnFailure=stop
+Volume=/run/unifi:/unifi/run
+NoNewPrivileges=true
+HealthCmd="/usr/local/bin/docker-healthcheck.sh || exit 1"
 HealthInterval=300s
+HealthOnFailure=stop
 
 [Service]
 Restart=on-failure

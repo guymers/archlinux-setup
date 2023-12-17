@@ -24,6 +24,7 @@ Environment=FLEXO_NUM_VERSIONS_RETAIN=2
 Environment=FLEXO_MIRROR_SELECTION_METHOD=predefined
 Environment=FLEXO_MIRRORS_PREDEFINED="['https://mirror.aarnet.edu.au/pub/archlinux/','https://sydney.mirror.pkgbuild.com/','https://mirror.fsmg.org.nz/archlinux/']"
 Volume=/var/cache/flexo:/var/cache/flexo
+NoNewPrivileges=true
 
 [Service]
 Restart=on-failure

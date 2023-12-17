@@ -20,3 +20,21 @@ Create a macvlan:
   --ipam-driver=host-local \
   lanpods
 ```
+
+```
+# podman network create -d macvlan \
+  -o parent=iot \
+  --subnet=10.10.4.0/24 \
+  --ip-range=10.10.4.210-10.10.4.240 \
+  --ipam-driver=host-local \
+  iotpods
+```
+
+```
+# podman network create -d macvlan \
+  -o parent=local \
+  --subnet=10.10.6.0/24 \
+  --ip-range=10.10.6.210-10.10.6.240 \
+  --ipam-driver=host-local \
+  localpods
+```

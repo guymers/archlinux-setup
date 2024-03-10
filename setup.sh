@@ -2,7 +2,7 @@
 set -e
 set -o pipefail
 
-# Last tested with archlinux-2023.09.01-x86_64.iso
+# Last tested with archlinux-2024.03.01-x86_64.iso
 #
 # Make sure you are okay with $drive being reformatted
 readonly drive_main="${ARCH_SETUP_DRIVE:-/dev/nvme<X>n1}"
@@ -152,10 +152,9 @@ cat << EOF > "/mnt/etc/kernel/cmdline_fallback"
 root=$root_fs rootflags=$btrfs_options,subvol=_/@ $cmdline_options
 EOF
 
-sed -i "s/^HOOKS=.*/HOOKS=(base systemd autodetect modconf kms keyboard block sd-encrypt filesystems fsck)/" /mnt/etc/mkinitcpio.conf
+sed -i "s/^HOOKS=.*/HOOKS=(base systemd autodetect microcode modconf kms keyboard block sd-encrypt filesystems fsck)/" /mnt/etc/mkinitcpio.conf
 cat << EOF > "/mnt/etc/mkinitcpio.d/$kernel.preset"
 ALL_kver="/boot/vmlinuz-$kernel"
-ALL_microcode=(/boot/*-ucode.img)
 
 PRESETS=('default' 'fallback')
 

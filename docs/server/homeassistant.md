@@ -27,7 +27,7 @@ After=network-online.target
 [Container]
 ContainerName=home-assistant
 HostName=home-assistant
-Image=ghcr.io/home-assistant/home-assistant:2023.12.3
+Image=ghcr.io/home-assistant/home-assistant:2024.3.1
 Network=iotpods
 IP=10.10.4.215
 DNS=10.10.4.210
@@ -42,8 +42,8 @@ NoNewPrivileges=true
 [Service]
 Restart=on-failure
 
-#[Install]
-#WantedBy=default.target
+[Install]
+WantedBy=default.target
 ```
 
 `> /etc/systemd/system/home-assistant-second-network.service`

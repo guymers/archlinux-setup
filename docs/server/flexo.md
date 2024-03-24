@@ -20,9 +20,9 @@ DNS=10.10.1.210
 User=65534
 Group=65534
 Environment=FLEXO_LISTEN_IP_ADDRESS=0.0.0.0
-Environment=FLEXO_NUM_VERSIONS_RETAIN=2
-Environment=FLEXO_MIRROR_SELECTION_METHOD=predefined
-Environment=FLEXO_MIRRORS_PREDEFINED="['https://mirror.aarnet.edu.au/pub/archlinux/','https://archlinux.mirror.digitalpacific.com.au/','https://mirror.fsmg.org.nz/archlinux/']"
+Environment=FLEXO_NUM_VERSIONS_RETAIN=1
+Environment=FLEXO_MIRROR_SELECTION_METHOD=auto
+Environment=FLEXO_MIRRORS_AUTO_ALLOWED_COUNTRIES=AU,NZ
 Volume=/var/cache/flexo:/var/cache/flexo
 NoNewPrivileges=true
 

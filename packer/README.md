@@ -10,6 +10,6 @@ During development run:
     packer build -force test-arch-setup.pkr.hcl
     packer build -force test-arch-ansible.pkr.hcl
 
-Pass-through flexo:
+Pass-through pacoloco:
 
-    socat tcp-listen:7878,reuseaddr,fork tcp:10.10.3.1:7878
+    socat tcp-listen:9129,reuseaddr,fork tcp:10.10.3.1:9129

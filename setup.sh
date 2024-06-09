@@ -2,7 +2,7 @@
 set -e
 set -o pipefail
 
-# Last tested with archlinux-2024.03.01-x86_64.iso
+# Last tested with archlinux-2024.06.01-x86_64.iso
 #
 # Make sure you are okay with $drive being reformatted
 readonly drive_main="${ARCH_SETUP_DRIVE:-/dev/nvme<X>n1}"
@@ -15,7 +15,8 @@ readonly btrfs_options=noatime,compress-force=zstd:1
 readonly home_btrfs_options=nodev,nosuid,$btrfs_options
 readonly kernel="linux" # linux-hardened, linux-zen
 
-readonly dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+readonly dir
 
 # or maybe efivar --list
 if ! [ -d "/sys/firmware/efi" ]; then
@@ -103,7 +104,8 @@ mkdir "/mnt/$esp"
 mount -o nodev,nosuid,noexec "$boot_drive" "/mnt/$esp"
 mkdir -p "/mnt/$esp/EFI/Linux"
 
-readonly cpu_vendor=$(lscpu | grep 'Vendor ID')
+cpu_vendor=$(lscpu | grep 'Vendor ID')
+readonly cpu_vendor
 if [[ $cpu_vendor == *"AuthenticAMD"* ]]; then
   extra_packages+=(amd-ucode)
 elif [[ $cpu_vendor == *"GenuineIntel"* ]]; then

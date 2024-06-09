@@ -42,7 +42,7 @@ Requires=unifi-syslog.service
 [Container]
 ContainerName=unifi
 HostName=unifi
-Image=ghcr.io/guymers/unifi:v8.0.26
+Image=ghcr.io/guymers/unifi:v8.1.127
 Network=lanpods
 IP=10.10.1.240
 DNS=10.10.1.210

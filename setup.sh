@@ -250,6 +250,23 @@ cp "$dir/config/initcpio/post/"* /mnt/etc/initcpio/post/
 arch-chroot /mnt mkdir -p /etc/pacman.d/hooks/
 cp "$dir/config/pacman/hooks/"* /mnt/etc/pacman.d/hooks/
 
+# pacman
+# allow readonly etc
+arch-chroot /mnt sed -i 's|^#GPGDir.*=.*/etc/pacman.d/gnupg/$|GPGDir = /var/lib/pacman/gnupg/|' /etc/pacman.conf
+arch-chroot /mnt grep -q 'GPGDir = /var/lib/pacman/gnupg/' /etc/pacman.conf
+arch-chroot /mnt mv /etc/pacman.d/gnupg /var/lib/pacman/
+
+arch-chroot /mnt sed -i 's|^#Color$|Color|' /etc/pacman.conf
+arch-chroot /mnt sed -i 's|^#VerbosePkgLists$|VerbosePkgLists|' /etc/pacman.conf
+arch-chroot /mnt sed -i 's|^#ParallelDownloads.*|ParallelDownloads = 3|' /etc/pacman.conf
+
+# makepkg
+arch-chroot /mnt sed -i 's|-march=x86-64 -mtune=generic|-march=native|' /etc/makepkg.conf
+arch-chroot /mnt sed -i 's|^#MAKEFLAGS=.*|MAKEFLAGS="--jobs=$(nproc)"|' /etc/makepkg.conf
+arch-chroot /mnt sed -i "s|^OPTIONS=.*|OPTIONS=(strip !libtool !staticlibs purge lto)|" /etc/makepkg.conf
+arch-chroot /mnt sed -i "s|^#PKGEXT=.*|PKGEXT='.pkg.tar'|" /etc/makepkg.conf
+arch-chroot /mnt sed -i "s|^#SRCEXT=.*|SRCEXT='.src.tar'|" /etc/makepkg.conf
+
 # sudo
 cp "$dir/config/sudoers.d/"* /mnt/etc/sudoers.d/
 

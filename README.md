@@ -30,7 +30,7 @@ Remove setup folder
 
 ### Notes
 - Change root password or disable login
-- Make sure cow is turned off for VirtualBox folders
+- Make sure cow is turned off for vm folders, see https://wiki.archlinux.org/title/Btrfs#Disabling_CoW
 - Install any graphics drivers, check https://wiki.archlinux.org/index.php/Hardware_video_acceleration
 - `cryptsetup  --allow-discards --persistent refresh root` to allow TRIM
 

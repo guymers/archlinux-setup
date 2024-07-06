@@ -1,0 +1,17 @@
+- name: vm packages
+  pacman:
+    name:
+      - podman
+      - podman-compose
+      - qemu-desktop
+    state: present
+  become: yes
+
+- name: qemu images directory
+  file:
+    path: "{{ lookup('env', 'HOME') }}/.local/share/images"
+    state: directory
+    mode: '0700'
+
+- name: qemu images directory no cow
+  command: "chattr +C {{ lookup('env', 'HOME') }}/.local/share/images"

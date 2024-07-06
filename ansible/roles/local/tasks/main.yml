@@ -11,3 +11,4 @@
 - import_tasks: util.yml
 - import_tasks: earlyoom.yml
 - import_tasks: firewall.yml
+- import_tasks: vm.yml

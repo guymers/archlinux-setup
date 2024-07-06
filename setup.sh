@@ -2,7 +2,7 @@
 set -e
 set -o pipefail
 
-# Last tested with archlinux-2024.06.01-x86_64.iso
+# Last tested with archlinux-2024.07.01-x86_64.iso
 #
 # Make sure you are okay with $drive being reformatted
 readonly drive_main="${ARCH_SETUP_DRIVE:-/dev/nvme<X>n1}"
@@ -199,44 +199,37 @@ Type=btrfs
 Options=rw,$home_btrfs_options,subvol=_/@home
 EOF
 
-# systemd-gpt-auto-generator does not generate esp automounts if using raid1
+# systemd-gpt-auto-generator does not auto mount esp if using raid1
 if [[ -n "$boot_drive_mirror" ]]; then
   boot1_uuid=$(arch-chroot /mnt blkid -s PARTUUID -o value "$boot_drive")
   boot1_escaped=$(arch-chroot /mnt systemd-escape "dev/disk/by-partuuid/$boot1_uuid")
   boot2_uuid=$(arch-chroot /mnt blkid -s PARTUUID -o value "$boot_drive_mirror")
   boot2_escaped=$(arch-chroot /mnt systemd-escape "dev/disk/by-partuuid/$boot2_uuid")
 
+# TODO mount depending on what was booted
 cat << EOF > "/mnt/etc/systemd/system/efi.mount"
 [Unit]
-Description=EFI System Partition Automount
-# main
+Description=EFI System Partition
 After=blockdev@${boot1_escaped}.target
-# mirror
-#After=blockdev@${boot2_escaped}.target
 
 [Mount]
-# main
 What=/dev/disk/by-partuuid/${boot1_uuid}
-# mirror
-#What=/dev/disk/by-partuuid/${boot2_uuid}
 Where=$esp
 Type=vfat
 Options=umask=0077,rw,nodev,nosuid,noexec,nosymfollow
 EOF
 
-cat << EOF > "/mnt/etc/systemd/system/efi.automount"
+cat << EOF > "/mnt/etc/systemd/system/efi_mirror.mount"
 [Unit]
-Description=EFI System Partition Automount
+Description=EFI System Partition Mirror
+After=blockdev@${boot2_escaped}.target
 
-[Automount]
+[Mount]
+What=/dev/disk/by-partuuid/${boot2_uuid}
 Where=$esp
-TimeoutIdleSec=120
-
-[Install]
-WantedBy=local-fs.target
+Type=vfat
+Options=umask=0077,rw,nodev,nosuid,noexec,nosymfollow
 EOF
-
-arch-chroot /mnt systemctl enable efi.automount
 fi
 
 find "$dir/config/" -type f -print0 | xargs -0 chmod 644
@@ -251,10 +244,15 @@ arch-chroot /mnt mkdir -p /etc/pacman.d/hooks/
 cp "$dir/config/pacman/hooks/"* /mnt/etc/pacman.d/hooks/
 
 # pacman
-# allow readonly etc
+# allow readonly /etc
 arch-chroot /mnt sed -i 's|^#GPGDir.*=.*/etc/pacman.d/gnupg/$|GPGDir = /var/lib/pacman/gnupg/|' /etc/pacman.conf
 arch-chroot /mnt grep -q 'GPGDir = /var/lib/pacman/gnupg/' /etc/pacman.conf
 arch-chroot /mnt mv /etc/pacman.d/gnupg /var/lib/pacman/
+# https://gitlab.archlinux.org/archlinux/packaging/packages/pacman/-/blob/6.1.0-3/PKGBUILD
+for unit in dirmngr gpg-agent gpg-agent-{browser,extra,ssh} keyboxd; do
+  ln -s "/usr/lib/systemd/system/${unit}@.socket" "/usr/lib/systemd/system/sockets.target.wants/${unit}@var-lib-pacman-gnupg.socket"
+  rm "/usr/lib/systemd/system/sockets.target.wants/${unit}@etc-pacman.d-gnupg.socket"
+done
 
 arch-chroot /mnt sed -i 's|^#Color$|Color|' /etc/pacman.conf
 arch-chroot /mnt sed -i 's|^#VerbosePkgLists$|VerbosePkgLists|' /etc/pacman.conf

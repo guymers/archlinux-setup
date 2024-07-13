@@ -7,7 +7,7 @@ Secure Boot: disabled (setup)
 ...
 ```
 
-Check to see if Microsoft keys are needed due by firmware that loads during boot:
+Check to see if Microsoft keys are needed by firmware that loads during boot:
 
 ```
 # cat /sys/kernel/security/tpm0/binary_bios_measurements > /tmp/tpmlog.bin
@@ -23,7 +23,6 @@ If lines are output call `enroll-keys` with the `--microsoft` flag
 # sbctl create-keys
 # sbctl enroll-keys
 # sbctl sign -s /efi/EFI/Linux/arch-linux.efi
-# sbctl sign -s /efi/EFI/Linux/arch-linux-fallback.efi
 ```
 
 Add `lockdown=integrity` to `/etc/kernel/cmdline`

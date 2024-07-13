@@ -120,7 +120,8 @@ if [[ -n "$ARCH_SETUP_PACMAN_MIRROR" ]]; then
   echo "Server = $ARCH_SETUP_PACMAN_MIRROR" > /etc/pacman.d/mirrorlist
 fi
 
-pacstrap /mnt base "$kernel" linux-firmware btrfs-progs cryptsetup efibootmgr \
+sed -i 's|^#ParallelDownloads.*|ParallelDownloads = 3|' /etc/pacman.conf
+pacstrap /mnt base "$kernel" linux-firmware btrfs-progs cryptsetup efibootmgr systemd-ukify \
   pacman-contrib openssh sudo vim "${extra_packages[@]}"
 
 echo "$hostname" > /mnt/etc/hostname
@@ -206,38 +207,91 @@ if [[ -n "$boot_drive_mirror" ]]; then
   boot2_uuid=$(arch-chroot /mnt blkid -s PARTUUID -o value "$boot_drive_mirror")
   boot2_escaped=$(arch-chroot /mnt systemd-escape "dev/disk/by-partuuid/$boot2_uuid")
 
-# TODO mount depending on what was booted
-cat << EOF > "/mnt/etc/systemd/system/efi.mount"
+cat << EOF > "/mnt/etc/systemd/system/mnt-efi-1.mount"
 [Unit]
-Description=EFI System Partition
+Description=EFI System Partition 1
 After=blockdev@${boot1_escaped}.target
 
 [Mount]
 What=/dev/disk/by-partuuid/${boot1_uuid}
-Where=$esp
+Where=/mnt/efi/1
 Type=vfat
 Options=umask=0077,rw,nodev,nosuid,noexec,nosymfollow
 EOF
 
-cat << EOF > "/mnt/etc/systemd/system/efi_mirror.mount"
+cat << EOF > "/mnt/etc/systemd/system/mnt-efi-2.mount"
 [Unit]
-Description=EFI System Partition Mirror
+Description=EFI System Partition 2
 After=blockdev@${boot2_escaped}.target
 
 [Mount]
 What=/dev/disk/by-partuuid/${boot2_uuid}
+Where=/mnt/efi/mirror
+Type=vfat
+Options=umask=0077,rw,nodev,nosuid,noexec,nosymfollow
+EOF
+
+cat << "EOF" > "/mnt/usr/local/bin/booted.sh"
+#!/bin/bash
+set -e
+
+boot_index=$(efibootmgr | grep -e '^BootCurrent:' | awk '{print $2}')
+partuuid=$(efibootmgr | grep -e "^Boot${boot_index}" | grep -Eo 'HD(.+)' | awk -F',' '{print $3}')
+
+systemctl set-environment "BOOTED_DISK=/dev/disk/by-partuuid/$partuuid"
+EOF
+chmod +x /mnt/usr/local/bin/booted.sh
+
+cat << EOF > "/mnt/etc/systemd/system/booted.service"
+[Unit]
+Description=Determine what partition the system booted on
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/usr/local/bin/booted.sh
+EOF
+
+cat << EOF > "/mnt/etc/systemd/system/efi.mount"
+[Unit]
+Description=EFI System Partition
+After=booted.service
+Requires=booted.service
+
+[Mount]
+What=\$BOOTED_DISK
 Where=$esp
 Type=vfat
 Options=umask=0077,rw,nodev,nosuid,noexec,nosymfollow
 EOF
+
+cat << EOF > "/mnt/etc/systemd/system/efi.automount"
+[Unit]
+Description=EFI System Partition Automount
+
+[Automount]
+Where=$esp
+TimeoutIdleSec=60
+
+[Install]
+WantedBy=local-fs.target
+EOF
+arch-chroot /mnt systemctl enable efi.automount
+
+# `systemd-boot-random-seed.service` hangs due to the variable in `efi.mount`
+arch-chroot /mnt mkdir /etc/systemd/system/systemd-boot-random-seed.service.d
+cat << EOF > "/mnt/etc/systemd/system/systemd-boot-random-seed.service.d/not-on-init.conf"
+[Unit]
+#Before=sysinit.target shutdown.target
+Before=shutdown.target
+
+[Service]
+TimeoutSec=30s
+EOF
+arch-chroot /mnt rm /usr/lib/systemd/system/sysinit.target.wants/systemd-boot-random-seed.service
 fi
 
 find "$dir/config/" -type f -print0 | xargs -0 chmod 644
-find "$dir/config/initcpio/post/" -type f -print0 | xargs -0 chmod 755
-
-# initcpio hooks
-arch-chroot /mnt mkdir -p /etc/initcpio/post/
-cp "$dir/config/initcpio/post/"* /mnt/etc/initcpio/post/
 
 # pacman hooks
 arch-chroot /mnt mkdir -p /etc/pacman.d/hooks/
@@ -325,6 +379,8 @@ if [[ -n "$boot_drive_mirror" ]]; then
   add_boot_entries "$drive_mirror" " [mirror]"
 fi
 add_boot_entries "$drive_main" ""
+
+arch-chroot /mnt bootctl random-seed
 
 # if secure boot is already enabled probably dual booting so install the pre-loader
 if bootctl status | grep 'Secure Boot' | cut -d ":" -f 2 | grep "enabled" ; then

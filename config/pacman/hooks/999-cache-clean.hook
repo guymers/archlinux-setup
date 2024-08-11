@@ -7,6 +7,7 @@ Operation = Remove
 Target = *
 
 [Action]
+Depends = pacman-contrib
 Description = Removing obsolete cached package files (keeping the latest two)...
 When = PostTransaction
 Exec = /usr/bin/paccache -rk2

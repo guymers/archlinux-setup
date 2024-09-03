@@ -1,4 +1,6 @@
 
+TODO
+
 Change `rw` to `ro` in `/etc/kernel/cmdline` and rebuild the kernels `mkinitcpio -P`
 
 ### Updating

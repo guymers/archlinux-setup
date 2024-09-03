@@ -1,4 +1,4 @@
-- name: terminal packages
+- name: terminal packages (x11)
   pacman:
     name:
       - xterm
@@ -6,5 +6,12 @@
       - urxvt-perls
       - x11-ssh-askpass
       - xclip
+    state: present
+  become: yes
+
+- name: terminal packages (wayland)
+  pacman:
+    name:
+      - foot
     state: present
   become: yes

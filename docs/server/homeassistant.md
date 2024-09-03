@@ -27,14 +27,14 @@ After=network-online.target
 [Container]
 ContainerName=home-assistant
 HostName=home-assistant
-Image=ghcr.io/home-assistant/home-assistant:2024.6.1
+Image=ghcr.io/home-assistant/home-assistant:2024.8.3
 Network=iotpods
 IP=10.10.4.215
 DNS=10.10.4.210
 Environment=TZ=UTC
 # homeassistant:homeassistant
-Environment=PUID=969
-Environment=PGID=969
+Environment=PUID=968
+Environment=PGID=968
 Volume=/var/lib/hass:/config
 Volume=/var/lib/hass/docker-run:/etc/services.d/home-assistant/run:ro
 NoNewPrivileges=true

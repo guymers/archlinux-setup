@@ -304,8 +304,8 @@ arch-chroot /mnt grep -q 'GPGDir = /var/lib/pacman/gnupg/' /etc/pacman.conf
 arch-chroot /mnt mv /etc/pacman.d/gnupg /var/lib/pacman/
 # https://gitlab.archlinux.org/archlinux/packaging/packages/pacman/-/blob/6.1.0-3/PKGBUILD
 for unit in dirmngr gpg-agent gpg-agent-{browser,extra,ssh} keyboxd; do
-  ln -s "/usr/lib/systemd/system/${unit}@.socket" "/usr/lib/systemd/system/sockets.target.wants/${unit}@var-lib-pacman-gnupg.socket"
-  rm "/usr/lib/systemd/system/sockets.target.wants/${unit}@etc-pacman.d-gnupg.socket"
+  arch-chroot /mnt ln -s "/usr/lib/systemd/system/${unit}@.socket" "../${unit}@var-lib-pacman-gnupg.socket"
+  arch-chroot /mnt rm "/usr/lib/systemd/system/sockets.target.wants/${unit}@etc-pacman.d-gnupg.socket"
 done
 
 arch-chroot /mnt sed -i 's|^#Color$|Color|' /etc/pacman.conf

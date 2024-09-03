@@ -2,10 +2,24 @@
   pacman:
     name:
       - mesa-vdpau
+      - mpv
+    state: present
+  become: yes
+
+- name: video packages (x11)
+  pacman:
+    name:
       - xorg-server
       - xorg-xinit
       - xorg-xrandr
       - xorg-xrdb
-      - mpv
+    state: present
+  become: yes
+
+- name: video packages (wayland)
+  pacman:
+    name:
+      - kanshi
+      - wlr-randr
     state: present
   become: yes

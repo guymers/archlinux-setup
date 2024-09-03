@@ -1,4 +1,6 @@
 
+https://wiki.archlinux.org/title/Power_management/Suspend_and_hibernate#Hibernation
+
 `# btrfs subvolume create _/@swap`
 
 `# btrfs filesystem mkswapfile --size <ram>g --uuid clear /swap/file`
@@ -18,15 +20,16 @@ Type=btrfs
 Options=subvol=_/@swap
 ```
 
-`> /etc/systemd/system/file.swap`
+`> /etc/systemd/system/swap-file.swap`
 ```
-[Unit]
-After=swap.mount
-
 [Swap]
 What=/swap/file
 TimeoutSec=60s
 ```
+
+
+--- shouldnt be needed if using systemd mkinitipic hooks
+
 
 offset:
 `# btrfs inspect-internal map-swapfile -r /swap/file`

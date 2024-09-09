@@ -11,7 +11,7 @@
 - name: util packages
   pacman:
     name:
-      - bash-completion
+      - libfido2
       - lm_sensors
       - net-tools
       - rsync

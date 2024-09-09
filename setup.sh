@@ -2,7 +2,7 @@
 set -e
 set -o pipefail
 
-# Last tested with archlinux-2024.07.01-x86_64.iso
+# Last tested with archlinux-2024.09.01-x86_64.iso
 #
 # Make sure you are okay with $drive being reformatted
 readonly drive_main="${ARCH_SETUP_DRIVE:-/dev/nvme<X>n1}"
@@ -122,7 +122,8 @@ fi
 
 sed -i 's|^#ParallelDownloads.*|ParallelDownloads = 3|' /etc/pacman.conf
 pacstrap /mnt base "$kernel" linux-firmware btrfs-progs cryptsetup efibootmgr systemd-ukify \
-  pacman-contrib openssh sudo vim "${extra_packages[@]}"
+  bash-completion pacman-contrib openssh sudo vim \
+  "${extra_packages[@]}"
 
 echo "$hostname" > /mnt/etc/hostname
 arch-chroot /mnt ln -sf "/usr/share/zoneinfo/$timezone" /etc/localtime
@@ -304,7 +305,7 @@ arch-chroot /mnt grep -q 'GPGDir = /var/lib/pacman/gnupg/' /etc/pacman.conf
 arch-chroot /mnt mv /etc/pacman.d/gnupg /var/lib/pacman/
 # https://gitlab.archlinux.org/archlinux/packaging/packages/pacman/-/blob/6.1.0-3/PKGBUILD
 for unit in dirmngr gpg-agent gpg-agent-{browser,extra,ssh} keyboxd; do
-  arch-chroot /mnt ln -s "/usr/lib/systemd/system/${unit}@.socket" "../${unit}@var-lib-pacman-gnupg.socket"
+  arch-chroot /mnt ln -s "/usr/lib/systemd/system/${unit}@.socket" "/usr/lib/systemd/system/sockets.target.wants/${unit}@var-lib-pacman-gnupg.socket"
   arch-chroot /mnt rm "/usr/lib/systemd/system/sockets.target.wants/${unit}@etc-pacman.d-gnupg.socket"
 done
 
@@ -314,10 +315,7 @@ arch-chroot /mnt sed -i 's|^#ParallelDownloads.*|ParallelDownloads = 3|' /etc/pa
 
 # makepkg
 arch-chroot /mnt sed -i 's|-march=x86-64 -mtune=generic|-march=native|' /etc/makepkg.conf
-arch-chroot /mnt sed -i 's|^#MAKEFLAGS=.*|MAKEFLAGS="--jobs=$(nproc)"|' /etc/makepkg.conf
-arch-chroot /mnt sed -i "s|^OPTIONS=.*|OPTIONS=(strip !libtool !staticlibs purge lto)|" /etc/makepkg.conf
-arch-chroot /mnt sed -i "s|^#PKGEXT=.*|PKGEXT='.pkg.tar'|" /etc/makepkg.conf
-arch-chroot /mnt sed -i "s|^#SRCEXT=.*|SRCEXT='.src.tar'|" /etc/makepkg.conf
+cp "$dir/config/makepkg.conf.d/"* /mnt/etc/makepkg.conf.d/
 
 # sudo
 cp "$dir/config/sudoers.d/"* /mnt/etc/sudoers.d/

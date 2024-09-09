@@ -6,6 +6,8 @@
       - urxvt-perls
       - x11-ssh-askpass
       - xclip
+      - xss-lock
+      - xsecurelock
     state: present
   become: yes
 

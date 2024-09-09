@@ -8,3 +8,11 @@
       - pavucontrol
     state: present
   become: yes
+
+- name: players
+  pacman:
+    name:
+      - quodlibet
+      - gst-plugins-good
+    state: present
+  become: yes

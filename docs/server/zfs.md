@@ -1,7 +1,8 @@
 
 `# pacman -S linux-headers autoconf automake libtool`
-
 `# paru -S zfs-dkms`
+
+or `pacman -S linux-cachyos-zfs zfs-utils`
 
 Make sure there is no `lockdown` in kernel boot command line.
 
@@ -39,7 +40,7 @@ Create a pool:
   -O atime=off \
   -O xattr=sa \
   -O acltype=posixacl \
-  -m /media/data data raid{z,z2} \ <device ids>
+  -m /media/data data raid{z,z2} \ <dev/disk/by-id>
 ```
 
 For general purpose file storage: `# zfs set recordsize=1024K data`

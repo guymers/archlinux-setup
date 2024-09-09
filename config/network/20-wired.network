@@ -10,3 +10,14 @@ MulticastDNS=resolve
 
 [DHCP]
 RouteMetric=512
+
+[DHCPv4]
+UseDNS=no
+UseNTP=no
+
+[DHCPv6]
+UseDNS=no
+UseNTP=no
+
+[IPv6AcceptRA]
+UseDNS=no

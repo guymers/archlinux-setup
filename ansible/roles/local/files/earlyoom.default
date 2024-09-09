@@ -2,4 +2,4 @@
 # /etc/init.d/earlyoom or by systemd from earlyoom.service.
 
 # available minimum memory 6%
-EARLYOOM_ARGS="-m 6 -s 6 -r 300 -n --avoid '(^|/)(init|systemd|xinit|Xorg|wpa_supplicant)$' --prefer '(^|/)(java|chromium|firefox)$'""
+EARLYOOM_ARGS="-m 6 -s 6 -r 300 -n --avoid '(^|/)(init|systemd|xinit|Xorg|wpa_supplicant)$' --prefer '(^|/)(java|chromium|firefox)$'"

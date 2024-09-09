@@ -10,3 +10,14 @@ LLMNR=no
 
 [DHCP]
 RouteMetric=1024
+
+[DHCPv4]
+UseDNS=no
+UseNTP=no
+
+[DHCPv6]
+UseDNS=no
+UseNTP=no
+
+[IPv6AcceptRA]
+UseDNS=no

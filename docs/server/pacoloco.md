@@ -13,10 +13,14 @@ repos:
       - https://sydney.mirror.pkgbuild.com/
       - https://mirror.aarnet.edu.au/pub/archlinux/
       - https://mirror.fsmg.org.nz/archlinux/
+  cachyos:
+    urls:
+      - https://mirror.cachyos.org/repo/
+      - https://us.cachyos.org/repo/
 prefetch:
   cron: 0 0 3 * * * * # 3am every day
-  ttl_unaccessed_in_days: 14
-  ttl_unupdated_in_days: 30
+  ttl_unaccessed_in_days: 28
+  ttl_unupdated_in_days: 60
 ```
 
 `# systemctl enable --now pacoloco.service`

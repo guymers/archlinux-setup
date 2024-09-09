@@ -1,9 +1,16 @@
-- name: vm packages
+- name: container packages
   pacman:
     name:
       - podman
       - podman-compose
+    state: present
+  become: yes
+
+- name: vm packages
+  pacman:
+    name:
       - qemu-desktop
+      - virt-manager
     state: present
   become: yes
 

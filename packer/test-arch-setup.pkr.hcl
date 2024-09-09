@@ -17,8 +17,8 @@ source "qemu" "arch-setup" {
   vm_name = "test-arch-setup.qcow2"
   format = "qcow2"
   output_directory = "target/test-arch-setup/"
-  iso_url = "https://geo.mirror.pkgbuild.com/iso/2024.08.01/archlinux-2024.08.01-x86_64.iso"
-  iso_checksum = "sha256:55284a14f71df3e1e45a1e732097f2ca0034c0fc0d912e58812c2eededa0828f"
+  iso_url = "https://geo.mirror.pkgbuild.com/iso/2024.09.01/archlinux-2024.09.01-x86_64.iso"
+  iso_checksum = "sha256:1652f3cee1b9857742123d392bb467bc5472ecd59a977bd6e17b7c379607b20c"
   headless = var.headless
   cpus = var.cpus
   memory = var.memory
@@ -27,9 +27,9 @@ source "qemu" "arch-setup" {
   qemuargs = [
     ["-bios", "/usr/share/edk2-ovmf/x64/OVMF_CODE.fd"]
   ]
-  boot_wait = "10s"
+  boot_wait = "9s"
   boot_command = [
-    "<enter><wait10><wait10><wait10><wait10>",
+    "<enter><wait10><wait10>",
     "curl -s http://{{ .HTTPIP }}:{{ .HTTPPort }}/setup.tar | tar -x<enter><wait2>",
     "curl -s http://{{ .HTTPIP }}:{{ .HTTPPort }}/run_setup.sh > run_setup.sh<enter><wait2>",
     "bash run_setup.sh<enter>"
@@ -42,6 +42,12 @@ source "qemu" "arch-setup" {
   ssh_handshake_attempts = 100
 
   shutdown_command = "echo 'user' | sudo -S shutdown -P now"
+
+  # avoid shutting down after completion
+#   net_bridge = "virbr0"
+#   ssh_password = "invalid"
+#   http_port_min = 8888
+#   http_port_max = 8888
 }
 
 build {

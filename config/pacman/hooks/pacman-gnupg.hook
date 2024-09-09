@@ -1,0 +1,9 @@
+[Trigger]
+Type = Package
+Operation = Upgrade
+Target = pacman
+
+[Action]
+Description = Removing pacman systemd gnupg sockets pointing at /etc ...
+When = PostTransaction
+Exec = /usr/bin/bash -c '/usr/bin/rm -f /usr/lib/systemd/system/sockets.target.wants/{dirmngr,gpg-agent,gpg-agent-browser,gpg-agent-extra,gpg-agent-ssh,keyboxd}@etc-pacman.d-gnupg.socket'

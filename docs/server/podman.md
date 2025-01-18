@@ -10,13 +10,20 @@ driver = "btrfs"
 ...
 ```
 
+`> /etc/containers/containers.conf`
+```
+...
+pasta_options = [ "--ipv4-only" ]
+...
+```
+
 Create a macvlan:
 
 ```
 # podman network create -d macvlan \
   -o parent=lan \
   --subnet=10.10.1.0/24 \
-  --ip-range=10.10.1.210-10.10.1.240 \
+  --ip-range=10.10.1.225-10.10.1.238 \
   --ipam-driver=host-local \
   lanpods
 ```
@@ -25,7 +32,7 @@ Create a macvlan:
 # podman network create -d macvlan \
   -o parent=iot \
   --subnet=10.10.4.0/24 \
-  --ip-range=10.10.4.210-10.10.4.240 \
+  --ip-range=10.10.4.225-10.10.4.238 \
   --ipam-driver=host-local \
   iotpods
 ```
@@ -34,7 +41,7 @@ Create a macvlan:
 # podman network create -d macvlan \
   -o parent=local \
   --subnet=10.10.6.0/24 \
-  --ip-range=10.10.6.210-10.10.6.240 \
+  --ip-range=10.10.6.225-10.10.6.238 \
   --ipam-driver=host-local \
   localpods
 ```

@@ -29,8 +29,8 @@ ContainerName=home-assistant
 HostName=home-assistant
 Image=ghcr.io/home-assistant/home-assistant:2024.8.3
 Network=iotpods
-IP=10.10.4.215
-DNS=10.10.4.210
+IP=10.10.4.225
+DNS=10.10.4.224
 Environment=TZ=UTC
 # homeassistant:homeassistant
 Environment=PUID=968

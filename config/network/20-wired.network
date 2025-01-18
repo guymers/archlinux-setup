@@ -5,6 +5,7 @@ Name=eth*
 [Network]
 DHCP=yes
 IPv6PrivacyExtensions=yes
+IPv6LinkLocalAddressGenerationMode=stable-privacy
 LLMNR=no
 MulticastDNS=resolve
 

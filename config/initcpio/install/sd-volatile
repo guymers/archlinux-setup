@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# https://bugs.archlinux.org/task/55648.html#comment198701
+
+build() {
+  add_module "overlay"
+  add_systemd_unit "systemd-volatile-root.service"
+}
+
+help() {
+  echo "Allows systemd.volatile to work."
+}

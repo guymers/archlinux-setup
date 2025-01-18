@@ -31,3 +31,7 @@ OnBootSec=10
 [Install]
 WantedBy=timers.target
 ```
+
+```
+# pacman -S libva-nvidia-driver
+```

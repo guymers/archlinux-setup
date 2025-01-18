@@ -21,14 +21,13 @@ source "qemu" "arch-ansible" {
   use_backing_file = true
   iso_url = "target/test-arch-setup/test-arch-setup.qcow2"
   iso_checksum = "none"
+  efi_firmware_code = "/usr/share/edk2/x64/OVMF_CODE.4m.fd"
+  efi_firmware_vars = "/usr/share/edk2/x64/OVMF_VARS.4m.fd"
   headless = var.headless
   cpus = var.cpus
   memory = var.memory
   disk_size = "10G"
   disk_additional_size = [ "10G" ]
-  qemuargs = [
-    ["-bios", "/usr/share/edk2-ovmf/x64/OVMF_CODE.fd"]
-  ]
   boot_wait = "15s"
 
   ssh_username = "user"

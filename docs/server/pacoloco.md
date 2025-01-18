@@ -18,7 +18,7 @@ repos:
       - https://mirror.cachyos.org/repo/
       - https://us.cachyos.org/repo/
 prefetch:
-  cron: 0 0 3 * * * * # 3am every day
+  cron: 0 0 20 * * * * # 8pm every day
   ttl_unaccessed_in_days: 28
   ttl_unupdated_in_days: 60
 ```

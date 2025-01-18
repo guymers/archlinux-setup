@@ -2,11 +2,10 @@
 set -e
 set -o pipefail
 
-# Last tested with archlinux-2024.09.01-x86_64.iso
+# Last tested with archlinux-2025.01.01-x86_64.iso
 #
 # Make sure you are okay with $drive being reformatted
 readonly drive_main="${ARCH_SETUP_DRIVE:-/dev/nvme<X>n1}"
-readonly drive_mirror="${ARCH_SETUP_DRIVE_MIRROR}"
 readonly swap_amount="" # set to a value if you want swap
 readonly hostname="arch-temp"
 readonly lang="en_US.UTF-8"
@@ -29,7 +28,6 @@ readonly esp="/efi"
 extra_packages=()
 
 boot_drive=
-boot_drive_mirror=
 root_drives=()
 swap_labels=()
 
@@ -67,23 +65,16 @@ function partition() {
     --verify-passphrase luksFormat "$root_drive"
   cryptsetup open "$root_drive" "root${index}"
 
-  mkfs.fat -F32 "$boot_drive"
+  mkfs.fat -F32 -n esp "$boot_drive"
   root_drives+=("$root_drive")
 }
 
-if [[ -n "$drive_mirror" ]]; then
-  partition "$drive_mirror" "2"
-  boot_drive_mirror="$boot_drive"
-  partition "$drive_main" "1"
-  mkfs.btrfs -m raid1 -d raid1 -f -L archroot /dev/mapper/root1 /dev/mapper/root2
-else
-  partition "$drive_main" ""
-  mkfs.btrfs -f -L archroot /dev/mapper/root
-fi
+partition "$drive_main" ""
+mkfs.btrfs -f -L archroot /dev/mapper/root
 
 root_fs=/dev/disk/by-label/archroot
 # installing on an sdcard and the label didn't exist, so fallback to the mapper
-if [[ ! -f "$root_fs" && -z "$drive_mirror" ]]; then
+if [[ ! -f "$root_fs" ]]; then
   root_fs=/dev/mapper/root
 fi
 mount "$root_fs" /mnt
@@ -122,7 +113,7 @@ fi
 
 sed -i 's|^#ParallelDownloads.*|ParallelDownloads = 3|' /etc/pacman.conf
 pacstrap /mnt base "$kernel" linux-firmware btrfs-progs cryptsetup efibootmgr systemd-ukify \
-  bash-completion pacman-contrib openssh sudo vim \
+  bash-completion dosfstools pacman-contrib openssh sudo vim \
   "${extra_packages[@]}"
 
 echo "$hostname" > /mnt/etc/hostname
@@ -147,16 +138,18 @@ done
 
 readonly cmdline_options="rw rd.shell=0 rd.emergency=reboot"
 cat << EOF > "/mnt/etc/kernel/cmdline"
-root=$root_fs rootflags=$btrfs_options,subvol=_/@ $cmdline_options cgroup_enable=memory
+root=$root_fs rootflags=$btrfs_options,subvol=_/@ $cmdline_options
 EOF
 cat << EOF > "/mnt/etc/kernel/cmdline_degraded"
-root=$root_fs rootflags=$btrfs_options,degraded,subvol=_/@ $cmdline_options cgroup_enable=memory
+root=$root_fs rootflags=$btrfs_options,degraded,subvol=_/@ $cmdline_options
 EOF
 cat << EOF > "/mnt/etc/kernel/cmdline_fallback"
 root=$root_fs rootflags=$btrfs_options,subvol=_/@ $cmdline_options
 EOF
 
-sed -i "s/^HOOKS=.*/HOOKS=(base systemd autodetect microcode modconf kms keyboard block sd-encrypt filesystems fsck)/" /mnt/etc/mkinitcpio.conf
+cp "$dir/config/initcpio/install/"* /mnt/etc/initcpio/install/
+
+sed -i "s/^HOOKS=.*/HOOKS=(base systemd autodetect microcode modconf kms keyboard block sd-encrypt sd-volatile filesystems fsck)/" /mnt/etc/mkinitcpio.conf
 cat << EOF > "/mnt/etc/mkinitcpio.d/$kernel.preset"
 ALL_kver="/boot/vmlinuz-$kernel"
 
@@ -167,15 +160,16 @@ default_uki="$esp/EFI/Linux/arch-$kernel.efi"
 fallback_uki="$esp/EFI/Linux/arch-$kernel-fallback.efi"
 fallback_options="--skiphooks autodetect --cmdline /etc/kernel/cmdline_fallback"
 EOF
-if [[ -n "$boot_drive_mirror" ]]; then
-  sed -i "s/^PRESETS=.*/PRESETS=('default' 'degraded' 'fallback')/" "/mnt/etc/mkinitcpio.d/$kernel.preset"
-cat << EOF >> "/mnt/etc/mkinitcpio.d/$kernel.preset"
-
-degraded_uki="$esp/EFI/Linux/arch-$kernel-degraded.efi"
-degraded_options="--cmdline /etc/kernel/cmdline_degraded"
-EOF
-fi
 arch-chroot /mnt mkinitcpio -p "$kernel"
+
+# systemd-gpt-auto-generator generates efi.mount
+boot_drive_uuid=$(arch-chroot /mnt blkid -s PARTUUID -o value "$boot_drive")
+boot_drive_escaped=$(arch-chroot /mnt systemd-escape "dev/disk/by-partuuid/$boot_drive_uuid")
+mkdir -p /mnt/etc/systemd/system/efi.mount.d/
+cat << EOF > "/mnt/etc/systemd/system/efi.mount.d/fsck.conf"
+[Unit]
+Wants=systemd-fsck@${boot_drive_escaped}.service
+EOF
 
 cat << EOF > "/mnt/etc/systemd/system/var.mount"
 [Unit]
@@ -200,97 +194,6 @@ Where=/home
 Type=btrfs
 Options=rw,$home_btrfs_options,subvol=_/@home
 EOF
-
-# systemd-gpt-auto-generator does not auto mount esp if using raid1
-if [[ -n "$boot_drive_mirror" ]]; then
-  boot1_uuid=$(arch-chroot /mnt blkid -s PARTUUID -o value "$boot_drive")
-  boot1_escaped=$(arch-chroot /mnt systemd-escape "dev/disk/by-partuuid/$boot1_uuid")
-  boot2_uuid=$(arch-chroot /mnt blkid -s PARTUUID -o value "$boot_drive_mirror")
-  boot2_escaped=$(arch-chroot /mnt systemd-escape "dev/disk/by-partuuid/$boot2_uuid")
-
-cat << EOF > "/mnt/etc/systemd/system/mnt-efi-1.mount"
-[Unit]
-Description=EFI System Partition 1
-After=blockdev@${boot1_escaped}.target
-
-[Mount]
-What=/dev/disk/by-partuuid/${boot1_uuid}
-Where=/mnt/efi/1
-Type=vfat
-Options=umask=0077,rw,nodev,nosuid,noexec,nosymfollow
-EOF
-
-cat << EOF > "/mnt/etc/systemd/system/mnt-efi-2.mount"
-[Unit]
-Description=EFI System Partition 2
-After=blockdev@${boot2_escaped}.target
-
-[Mount]
-What=/dev/disk/by-partuuid/${boot2_uuid}
-Where=/mnt/efi/mirror
-Type=vfat
-Options=umask=0077,rw,nodev,nosuid,noexec,nosymfollow
-EOF
-
-cat << "EOF" > "/mnt/usr/local/bin/booted.sh"
-#!/bin/bash
-set -e
-
-boot_index=$(efibootmgr | grep -e '^BootCurrent:' | awk '{print $2}')
-partuuid=$(efibootmgr | grep -e "^Boot${boot_index}" | grep -Eo 'HD(.+)' | awk -F',' '{print $3}')
-
-systemctl set-environment "BOOTED_DISK=/dev/disk/by-partuuid/$partuuid"
-EOF
-chmod +x /mnt/usr/local/bin/booted.sh
-
-cat << EOF > "/mnt/etc/systemd/system/booted.service"
-[Unit]
-Description=Determine what partition the system booted on
-
-[Service]
-Type=oneshot
-RemainAfterExit=true
-ExecStart=/usr/local/bin/booted.sh
-EOF
-
-cat << EOF > "/mnt/etc/systemd/system/efi.mount"
-[Unit]
-Description=EFI System Partition
-After=booted.service
-Requires=booted.service
-
-[Mount]
-What=\$BOOTED_DISK
-Where=$esp
-Type=vfat
-Options=umask=0077,rw,nodev,nosuid,noexec,nosymfollow
-EOF
-
-cat << EOF > "/mnt/etc/systemd/system/efi.automount"
-[Unit]
-Description=EFI System Partition Automount
-
-[Automount]
-Where=$esp
-TimeoutIdleSec=60
-
-[Install]
-WantedBy=local-fs.target
-EOF
-arch-chroot /mnt systemctl enable efi.automount
-
-# `systemd-boot-random-seed.service` hangs due to the variable in `efi.mount`
-arch-chroot /mnt mkdir /etc/systemd/system/systemd-boot-random-seed.service.d
-cat << EOF > "/mnt/etc/systemd/system/systemd-boot-random-seed.service.d/not-on-init.conf"
-[Unit]
-#Before=sysinit.target shutdown.target
-Before=shutdown.target
-
-[Service]
-TimeoutSec=30s
-EOF
-arch-chroot /mnt rm /usr/lib/systemd/system/sysinit.target.wants/systemd-boot-random-seed.service
-fi
 
 find "$dir/config/" -type f -print0 | xargs -0 chmod 644
 
@@ -358,25 +261,10 @@ arch-chroot /mnt ln -s /usr/lib/systemd/system/btrfs-scrub@.timer "/etc/systemd/
 
 efibootmgr -t 3 || echo "could not change boot timeout"
 
-function add_boot_entries() {
-  local drive="$1"
-  local suffix="$2"
-
-  efibootmgr --create --disk "$drive" --part 1 --label "Arch Linux$suffix (fallback)" \
-    --loader "EFI\Linux\arch-$kernel-fallback.efi"
-  if [[ -n "$drive_mirror" ]]; then
-    efibootmgr --create --disk "$drive" --part 1 --label "Arch Linux$suffix (degraded)" \
-      --loader "EFI\Linux\arch-$kernel-degraded.efi"
-  fi
-  efibootmgr --create --disk "$drive" --part 1 --label "Arch Linux$suffix" \
-    --loader "EFI\Linux\arch-$kernel.efi"
-}
-
-if [[ -n "$boot_drive_mirror" ]]; then
-  dd if="$boot_drive" of="$boot_drive_mirror" bs=4096k # sync esp to mirror
-  add_boot_entries "$drive_mirror" " [mirror]"
-fi
-add_boot_entries "$drive_main" ""
+efibootmgr --create --disk "$drive_main" --part 1 --label "Arch Linux (fallback)" \
+  --loader "EFI\Linux\arch-$kernel-fallback.efi"
+efibootmgr --create --disk "$drive_main" --part 1 --label "Arch Linux" \
+  --loader "EFI\Linux\arch-$kernel.efi"
 
 arch-chroot /mnt bootctl random-seed
 

@@ -1,4 +1,13 @@
 
+
+Add `systemd.volatile=overlay` to `/etc/kernel/cmdline` and rebuild the kernels `mkinitcpio -P`
+
+`systemd.volatile=overlay`
+
+
+
+
+
 TODO
 
 Change `rw` to `ro` in `/etc/kernel/cmdline` and rebuild the kernels `mkinitcpio -P`

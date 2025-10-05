@@ -1,39 +1,57 @@
 
-`# pacman -S postfix s-nail`
+`# pacman -S opensmtpd s-nail`
 
-`> /etc/postfix/aliases`
+`> /etc/smtpd/aliases`
 ```
 root: <email>@custom.domain
 user: <email>@custom.domain
 ```
 
-`# postalias /etc/postfix/aliases`
-
-`# newaliases`
-
-`# mkdir /etc/postfix/sasl`
-
-`> /etc/postfix/sasl/sasl_passwd`
+`> /etc/smtpd/virtuals`
 ```
-[smtp.gmail.com]:587 <email>@custom.domain:<password>
+notification@email.local  <email>@custom.domain
 ```
 
-`# postmap /etc/postfix/sasl/sasl_passwd`
-
-`# chmod 600 /etc/postfix/sasl/sasl_passwd*`
-
-`> /etc/postfix/main.cf`
+`> /etc/smtpd/secrets`
 ```
-inet_interfaces = 127.0.0.1
-relayhost = [smtp.gmail.com]:587
-relay_domains = custom.domain
-alias_maps = lmbd:/etc/postfix/aliases
-
-smtp_sasl_auth_enable = yes
-smtp_sasl_security_options = 
-smtp_sasl_password_maps = lmdb:/etc/postfix/sasl/sasl_passwd
-smtp_tls_security_level = encrypt
-smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
+gmail <email>@custom.domain:<password>
 ```
 
-`# systemctl enable --now postfix`
+`# chmod 600 /etc/smtpd/secrets`
+
+`> /etc/smtpd/smtpd.conf`
+```
+table aliases file:/etc/smtpd/aliases
+table secrets file:/etc/smtpd/secrets
+table virtuals file:/etc/smtpd/virtuals
+
+listen on 0.0.0.0
+
+action "local" maildir alias <aliases>
+action "virtual" maildir virtual <virtuals>
+action "relay" relay host smtp+tls://gmail@smtp.gmail.com:587 auth <secrets>
+
+accept from any for domain <vdomains> virtual <vusers> deliver to maildir
+
+match for local action "local"
+match from src x.x.x.x/24 for domain email.local action "virtual"
+match from src x.x.x.x/24 for any action "local"
+match from local for any action "relay"
+```
+
+`# systemctl enable --now smtpd`
+
+On other servers:
+
+`> /etc/smtpd/smtpd.conf`
+```
+table aliases file:/etc/smtpd/aliases
+
+listen on localhost
+
+action "relay" relay host smtp://x.x.x.x
+
+match from local action "relay"
+```
+
+`# systemctl enable --now smtpd`

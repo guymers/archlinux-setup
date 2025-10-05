@@ -2,8 +2,6 @@
   pacman:
     name:
       - thunar
-      - thunar-volman
-      - gvfs
     state: present
   become: yes
 

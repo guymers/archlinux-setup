@@ -2,7 +2,7 @@
 set -e
 set -o pipefail
 
-# Last tested with archlinux-2025.01.01-x86_64.iso
+# Last tested with archlinux-2025.10.01-x86_64.iso
 #
 # Make sure you are okay with $drive being reformatted
 readonly drive_main="${ARCH_SETUP_DRIVE:-/dev/nvme<X>n1}"
@@ -140,12 +140,6 @@ readonly cmdline_options="rw rd.shell=0 rd.emergency=reboot"
 cat << EOF > "/mnt/etc/kernel/cmdline"
 root=$root_fs rootflags=$btrfs_options,subvol=_/@ $cmdline_options
 EOF
-cat << EOF > "/mnt/etc/kernel/cmdline_degraded"
-root=$root_fs rootflags=$btrfs_options,degraded,subvol=_/@ $cmdline_options
-EOF
-cat << EOF > "/mnt/etc/kernel/cmdline_fallback"
-root=$root_fs rootflags=$btrfs_options,subvol=_/@ $cmdline_options
-EOF
 
 cp "$dir/config/initcpio/install/"* /mnt/etc/initcpio/install/
 
@@ -153,12 +147,9 @@ sed -i "s/^HOOKS=.*/HOOKS=(base systemd autodetect microcode modconf kms keyboar
 cat << EOF > "/mnt/etc/mkinitcpio.d/$kernel.preset"
 ALL_kver="/boot/vmlinuz-$kernel"
 
-PRESETS=('default' 'fallback')
+PRESETS=('default')
 
 default_uki="$esp/EFI/Linux/arch-$kernel.efi"
-
-fallback_uki="$esp/EFI/Linux/arch-$kernel-fallback.efi"
-fallback_options="--skiphooks autodetect --cmdline /etc/kernel/cmdline_fallback"
 EOF
 arch-chroot /mnt mkinitcpio -p "$kernel"
 
@@ -261,10 +252,7 @@ arch-chroot /mnt ln -s /usr/lib/systemd/system/btrfs-scrub@.timer "/etc/systemd/
 
 efibootmgr -t 3 || echo "could not change boot timeout"
 
-efibootmgr --create --disk "$drive_main" --part 1 --label "Arch Linux (fallback)" \
-  --loader "EFI\Linux\arch-$kernel-fallback.efi"
-efibootmgr --create --disk "$drive_main" --part 1 --label "Arch Linux" \
-  --loader "EFI\Linux\arch-$kernel.efi"
+efibootmgr --create --disk "$drive_main" --part 1 --label "Arch Linux" --loader "EFI\Linux\arch-$kernel.efi"
 
 arch-chroot /mnt bootctl random-seed
 

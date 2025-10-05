@@ -17,8 +17,8 @@ source "qemu" "arch-setup" {
   vm_name = "test-arch.qcow2"
   format = "qcow2"
   output_directory = "target/test-arch/"
-  iso_url = "https://geo.mirror.pkgbuild.com/iso/2025.01.01/archlinux-2025.01.01-x86_64.iso"
-  iso_checksum = "sha256:74b109b4b36d20bef8f4203e30b8d223e0ab297a09d1a1213a02894472aa530a"
+  iso_url = "https://geo.mirror.pkgbuild.com/iso/2025.10.01/archlinux-2025.10.01-x86_64.iso"
+  iso_checksum = "sha256:86bde4fa571579120190a0946d54cd2b3a8bf834ef5c95ed6f26fbb59104ea1d"
   efi_firmware_code = "/usr/share/edk2/x64/OVMF_CODE.4m.fd"
   efi_firmware_vars = "/usr/share/edk2/x64/OVMF_VARS.4m.fd"
   headless = var.headless
@@ -26,9 +26,9 @@ source "qemu" "arch-setup" {
   memory = var.memory
   disk_size = "10G"
   disk_additional_size = [ "10G" ]
-  boot_wait = "10s"
+  boot_wait = "9s"
   boot_command = [
-    "<enter><wait10><wait10><wait10><wait10>",
+    "<enter><wait10><wait10><wait10>",
     "curl -O http://{{ .HTTPIP }}:{{ .HTTPPort }}/init.sh<enter><wait2>",
     "bash init.sh<enter>"
   ]

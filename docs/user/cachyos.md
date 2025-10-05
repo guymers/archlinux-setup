@@ -7,7 +7,7 @@ Install keyring
 `sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com`
 `sudo pacman-key --lsign-key F3B607488DB35A47`
 
-`sudo pacman -U https://mirror.cachyos.org/repo/x86_64/cachyos/pacman-7.0.0.r3.gf3211df-2-x86_64.pkg.tar.zst`
+`sudo pacman -U https://mirror.cachyos.org/repo/x86_64/cachyos/pacman-7.0.0.r6.gc685ae6-2-x86_64.pkg.tar.zst`
 
 `> /etc/pacman.d/cachyos-v4-mirrorlist`
 ```
@@ -25,7 +25,7 @@ Server = http://10.10.3.1:9129/repo/cachyos/$arch/$repo
 
 `> /etc/pacman.conf`
 ```
-Architecture = x86_64 x86_64_v3/x86_64_v3/znver4
+Architecture = x86_64 x86_64_v3/x86_64_v4/znver4
 
 [cachyos-znver4]
 Include = /etc/pacman.d/cachyos-v4-mirrorlist
@@ -41,4 +41,4 @@ If only `x86-64-v4` replace `znver4` with `v4`
 
 Modify `/etc/mkinitcpio.d/linux-cachyos.preset`
 
-`efibootmgr --create --disk "$drive" --part 1 --label "CachyOS" --loader "EFI\Linux\linux-cachyos.efi"`
+`efibootmgr --create --disk "/dev/nvme0n1p1" --part 1 --label "CachyOS" --loader "EFI\Linux\arch-linux-cachyos.efi"`

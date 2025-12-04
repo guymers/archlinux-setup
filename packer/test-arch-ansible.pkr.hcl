@@ -22,7 +22,7 @@ source "qemu" "arch-ansible" {
   iso_url = "target/test-arch-setup/test-arch-setup.qcow2"
   iso_checksum = "none"
   efi_firmware_code = "/usr/share/edk2/x64/OVMF_CODE.4m.fd"
-  efi_firmware_vars = "/usr/share/edk2/x64/OVMF_VARS.4m.fd"
+  efi_firmware_vars = "target/test-arch-setup/efivars.fd"
   headless = var.headless
   cpus = var.cpus
   memory = var.memory

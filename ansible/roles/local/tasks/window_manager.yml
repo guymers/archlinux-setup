@@ -1,11 +1,7 @@
 - name: window manager packages
   pacman:
     name:
-      - gtk2
-      - gtk-engines
-      - gtk-engine-murrine
       - openbox
-      - obconf
       - freetype2
       - ttf-dejavu
       - ttf-ubuntu-font-family

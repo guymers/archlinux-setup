@@ -2,7 +2,7 @@
 set -e
 set -o pipefail
 
-# Last tested with archlinux-2025.10.01-x86_64.iso
+# Last tested with archlinux-2025.12.01-x86_64.iso
 #
 # Make sure you are okay with $drive being reformatted
 readonly drive_main="${ARCH_SETUP_DRIVE:-/dev/nvme<X>n1}"

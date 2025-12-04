@@ -10,6 +10,8 @@ download_timeout: 120 # seconds
 repos:
   archlinux:
     urls:
+      - https://au.arch.niranjan.co/
+      - https://fastly.mirror.pkgbuild.com/
       - https://sydney.mirror.pkgbuild.com/
       - https://mirror.aarnet.edu.au/pub/archlinux/
       - https://mirror.fsmg.org.nz/archlinux/
@@ -18,7 +20,7 @@ repos:
       - https://mirror.cachyos.org/repo/
       - https://us.cachyos.org/repo/
 prefetch:
-  cron: 0 0 20 * * * * # 8pm every day
+  cron: 0 0 8,20 * * * * # multiple times every day
   ttl_unaccessed_in_days: 28
   ttl_unupdated_in_days: 60
 ```

@@ -1,23 +1,23 @@
-- name: "Is {{ name }} already installed"
-  shell: pacman -Q | grep '^{{ name }} '
+- name: "Is {{ pkg }} already installed"
+  shell: pacman -Q | grep '^{{ pkg }} '
   register: installed
   ignore_errors: True
 
 - block:
-  - name: "{{ name }} dependencies"
+  - name: "{{ pkg }} dependencies"
     pacman:
       name: "{{ dependencies }}"
       state: present
     become: yes
 
-  - name: "{{ name }} download"
-    unarchive: src=https://aur.archlinux.org/cgit/aur.git/snapshot/{{ name }}.tar.gz dest=/tmp copy=no
+  - name: "{{ pkg }} download"
+    unarchive: src=https://aur.archlinux.org/cgit/aur.git/snapshot/{{ pkg }}.tar.gz dest=/tmp copy=no
 
-  - name: "{{ name }} build"
-    shell: chdir=/tmp/{{ name }} creates={{ name }}.pkg makepkg -f --skippgpcheck && mv *.pkg.* {{ name }}.pkg
+  - name: "{{ pkg }} build"
+    shell: chdir=/tmp/{{ pkg }} creates={{ pkg }}.pkg makepkg -f --skippgpcheck && mv *.pkg.* {{ pkg }}.pkg
 
-  - name: "{{ name }} install"
-    shell: chdir=/tmp/{{ name }} pacman --noconfirm -U {{ name }}.pkg
+  - name: "{{ pkg }} install"
+    shell: chdir=/tmp/{{ pkg }} pacman --noconfirm -U {{ pkg }}.pkg
     become: yes
 
   when: installed is failed

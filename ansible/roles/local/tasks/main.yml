@@ -1,7 +1,7 @@
 - import_tasks: makepkg.yml
 - import_tasks: aur.yml
   vars:
-    name: paru-bin
+    pkg: paru-bin
     dependencies: [ git ]
 - import_tasks: audio.yml
 - import_tasks: video.yml

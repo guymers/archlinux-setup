@@ -17,8 +17,8 @@ source "qemu" "arch-setup" {
   vm_name = "test-arch-setup.qcow2"
   format = "qcow2"
   output_directory = "target/test-arch-setup/"
-  iso_url = "https://geo.mirror.pkgbuild.com/iso/2025.10.01/archlinux-2025.10.01-x86_64.iso"
-  iso_checksum = "sha256:86bde4fa571579120190a0946d54cd2b3a8bf834ef5c95ed6f26fbb59104ea1d"
+  iso_url = "https://geo.mirror.pkgbuild.com/iso/2025.12.01/archlinux-2025.12.01-x86_64.iso"
+  iso_checksum = "sha256:c2b1f13a68482db3aad008f14bb75cb15a44cd38fa8a1aa15e6675a50d4c4374"
   efi_firmware_code = "/usr/share/edk2/x64/OVMF_CODE.4m.fd"
   efi_firmware_vars = "/usr/share/edk2/x64/OVMF_VARS.4m.fd"
   headless = var.headless

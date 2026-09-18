@@ -1,7 +1,6 @@
 - name: video packages
   pacman:
     name:
-      - mesa-vdpau
       - mpv
     state: present
   become: yes

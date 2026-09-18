@@ -2,7 +2,7 @@
 Create a user:
 `> /etc/sysusers.d/home-assistant.conf`
 ```
-u hass - "Home Assistant" /var/lib/hass
+u hass 968 "Home Assistant" /var/lib/hass
 ```
 `# systemd-sysusers`
 
@@ -27,7 +27,7 @@ After=network-online.target
 [Container]
 ContainerName=home-assistant
 HostName=home-assistant
-Image=ghcr.io/home-assistant/home-assistant:2025.10.1@sha256:9255033272ab8f7bede246109ea9e7302527faf3accbf2ba7ef619e2206107ad
+Image=ghcr.io/home-assistant/home-assistant:2026.9.1@sha256:612d76760b544cb40b7ba01387fdac964c59a6a550a50a4d30b4773c822d2918
 Network=iotpods
 IP=10.10.4.225
 DNS=10.10.4.224
@@ -37,6 +37,7 @@ Environment=PUID=968
 Environment=PGID=968
 Volume=/var/lib/hass:/config
 Volume=/var/lib/hass/docker-run:/etc/services.d/home-assistant/run:ro
+
 # for the ping integration to work
 Sysctl=net.ipv4.ping_group_range='0 999'
 Environment=PACKAGES=iputils

@@ -2,7 +2,7 @@
 Create a user:
 `> /etc/sysusers.d/unifi.conf`
 ```
-u unifi - "Ubiquiti UniFi Controller" /var/lib/unifi
+u unifi 970 "Ubiquiti UniFi Controller" /var/lib/unifi
 ```
 `# systemd-sysusers`
 
@@ -42,7 +42,7 @@ Requires=unifi-syslog.service
 [Container]
 ContainerName=unifi
 HostName=unifi
-Image=ghcr.io/guymers/unifi:v9.3.45
+Image=ghcr.io/guymers/unifi:v10.1.89
 Network=lanpods
 IP=10.10.1.238
 DNS=10.10.1.224
@@ -61,7 +61,7 @@ HealthOnFailure=stop
 Restart=on-failure
 
 [Install]
-#WantedBy=default.target
+WantedBy=default.target
 ```
 
 `# systemctl daemon-reload`

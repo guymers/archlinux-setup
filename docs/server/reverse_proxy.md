@@ -57,6 +57,12 @@ ha.domain.example.com {
 
 unifi.domain.example.com {
   reverse_proxy Y:8443 {
+    header_up Host {http.reverse_proxy.upstream.hostport}
+    header_up Origin https://{http.reverse_proxy.upstream.hostport}
+
+    header_up Referer ""
+    header_up Authorization ""
+
     transport http {
       tls_insecure_skip_verify
     }
@@ -69,9 +75,12 @@ unifi.domain.example.com {
 #!/bin/sh
 set -e
 
-setfacl -m u:caddy:rx /etc/letsencrypt/{archive,live}
-setfacl -m u:caddy:r /etc/letsencrypt/archive/domain.example.com/privkey*
-setfacl -m u:caddy:r /etc/letsencrypt/live/domain.example.com/privkey.pem
+PRIVKEY="$RENEWED_LINEAGE/privkey.pem"
+TARGET_PRIVKEY=$(readlink -f "$PRIVKEY")
+
+setfacl -m u:caddy:rx "$RENEWED_LINEAGE"
+setfacl -m u:caddy:rx "$(dirname "$TARGET_PRIVKEY")"
+setfacl -m u:caddy:r "$TARGET_PRIVKEY"
 
 systemctl reload caddy
 ```

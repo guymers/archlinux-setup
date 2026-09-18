@@ -128,7 +128,7 @@ for i in "${!root_drives[@]}"; do
   root_uuid=$(arch-chroot /mnt blkid -s UUID -o value "${root_drives[$i]}")
   n="root$((i + 1))"
   if [[ "${#root_drives[@]}" -eq 1 ]]; then n="root"; fi
-  echo "$n  UUID=$root_uuid  -  password-echo=no,x-systemd.device-timeout=60,timeout=0" >> /mnt/etc/crypttab.initramfs
+  echo "$n  UUID=$root_uuid  -  password-echo=no,x-systemd.device-timeout=60,timeout=0,x-initrd.attach" >> /mnt/etc/crypttab
 done
 
 for i in "${!swap_labels[@]}"; do
